@@ -1,0 +1,12 @@
+{
+  "name": "talkbook",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.18.3",
+  "scripts": {
+    "dev:miniprogram": "pnpm --filter @talkbook/miniprogram dev:mp-weixin",
+    "dev:server": "pnpm --filter @talkbook/server dev",
+    "build:server": "pnpm --filter @talkbook/server build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

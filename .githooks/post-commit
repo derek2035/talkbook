@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -u
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+if [ "${TALKBOOK_DISABLE_AUTO_PUSH:-0}" = "1" ]; then
+  echo "[auto-push] disabled by TALKBOOK_DISABLE_AUTO_PUSH=1"
+  exit 0
+fi
+
+if ! "$REPO_ROOT/scripts/git-auto-push.sh" origin; then
+  echo "[auto-push] latest commit was created locally but was not pushed."
+fi

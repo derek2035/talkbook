@@ -18,6 +18,10 @@ Talkbook（口书）是一个**独立仓库**的 AI 成书项目，目标是让�
 
 - `docs/product-plan.md`：产品定位、目标用户、MVP 范围
 - `docs/product-requirements-prd.md`：更细粒度的 MVP 产品需求文档（PRD）
+- `docs/test-cases-mvp.md`：覆盖全部需求点的 MVP 测试用例
+- `docs/test-checklist-dev.md`：开发自测清单
+- `docs/test-checklist-release.md`：提测与验收清单
+- `docs/api-test-cases-mvp.md`：接口专项测试用例
 - `docs/architecture.md`：技术路线、模块拆分、阶段开发建议
 - `docs/development-roadmap.md`：分阶段开发路线图
 - `docs/mvp-spec.md`：MVP 页面、状态与交互说明

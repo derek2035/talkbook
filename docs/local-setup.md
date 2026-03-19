@@ -62,17 +62,27 @@ git status
 
 ## 当前仓库状态说明
 
-当前仓库处于“重新开始”的基线阶段，重点是：
+当前仓库已完成基础工程初始化，当前重点是：
 
-- 先明确产品和技术方案
-- 再正式初始化代码工程
+- 封版产品需求与接口范围
+- 按文档推进 MVP 主链路开发
+- 保持仓库独立、环境清晰、联调稳定
 
 所以现在本地 clone 完成后，优先阅读：
 
 - `README.md`
 - `docs/product-plan.md`
+- `docs/product-requirements-prd.md`
 - `docs/architecture.md`
 - `docs/development-roadmap.md`
+
+完成依赖安装后，建议执行：
+
+```bash
+pnpm install
+pnpm typecheck
+pnpm build:server
+```
 
 ## 如果已经放错目录怎么办
 

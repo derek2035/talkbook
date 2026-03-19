@@ -1,4 +1,6 @@
 export type BookType = 'novel' | 'autobiography' | 'memoir' | 'family-story';
+export type SessionStatus = 'collecting' | 'preview-ready' | 'completed';
+export type BookStatus = 'preview' | 'paid' | 'exported';
 
 export interface BookTypeOption {
   key: BookType;
@@ -23,16 +25,27 @@ export interface SessionCreateResponse {
   firstQuestion: string;
 }
 
+export interface SessionAudioUploadRequest {
+  transcript?: string;
+  duration?: number;
+  format?: string;
+}
+
 export interface SessionMessage {
+  id: string;
   role: 'assistant' | 'user' | 'system';
   content: string;
+  createdAt: string;
 }
 
 export interface SessionDetailResponse {
   sessionId: string;
   bookType: BookType;
+  status: SessionStatus;
+  currentQuestion: string;
   messages: SessionMessage[];
   canGenerate: boolean;
+  answerCount: number;
 }
 
 export interface AudioUploadResponse {
@@ -40,12 +53,54 @@ export interface AudioUploadResponse {
   transcript: string;
   nextQuestion: string;
   canGenerate: boolean;
+  answerCount: number;
+}
+
+export interface SkipQuestionResponse {
+  nextQuestion: string;
+  canGenerate: boolean;
+  skippedCount: number;
+}
+
+export interface PreviewOutlineItem {
+  title: string;
+  summary: string;
 }
 
 export interface PreviewGenerateResponse {
   bookId: string;
   title: string;
   summary: string;
-  outline: Array<{ title: string; summary: string }>;
+  outline: PreviewOutlineItem[];
   paymentRequired: boolean;
+}
+
+export interface BookChapter {
+  title: string;
+  summary: string;
+  content: string;
+}
+
+export interface BookDetailResponse {
+  bookId: string;
+  sessionId: string;
+  title: string;
+  summary: string;
+  status: BookStatus;
+  outline: PreviewOutlineItem[];
+  chapters: BookChapter[];
+  updatedAt: string;
+}
+
+export interface MyBookItem {
+  bookId: string;
+  sessionId: string;
+  title: string;
+  summary: string;
+  status: BookStatus;
+  updatedAt: string;
+}
+
+export interface MyBooksResponse {
+  items: MyBookItem[];
 }

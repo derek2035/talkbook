@@ -1,24 +1,19 @@
 import type { Request, Response } from 'express';
+import type { BookDetailResponse, MyBooksResponse } from '@talkbook/contracts';
 
-export function getBookHandler(req: Request<{ bookId: string }>, res: Response) {
-  res.json({
-    bookId: req.params.bookId,
-    title: '《时光里的母亲》',
-    status: 'preview',
-    outline: [],
-    chapters: []
-  });
+import { getBook, getMyBooks } from '../lib/talkbook-store.js';
+
+export function getBookHandler(req: Request<{ bookId: string }>, res: Response<BookDetailResponse | { error: string }>) {
+  const book = getBook(req.params.bookId);
+
+  if (!book) {
+    res.status(404).json({ error: 'Book not found' });
+    return;
+  }
+
+  res.json(book);
 }
 
-export function getMyBooksHandler(_req: Request, res: Response) {
-  res.json({
-    items: [
-      {
-        bookId: 'book_demo_001',
-        title: '《时光里的母亲》',
-        status: 'preview',
-        updatedAt: new Date().toISOString()
-      }
-    ]
-  });
+export function getMyBooksHandler(_req: Request, res: Response<MyBooksResponse>) {
+  res.json(getMyBooks());
 }

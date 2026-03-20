@@ -36,28 +36,51 @@
 {
   "transcript": "我最想写的是我的母亲，她很坚强。",
   "duration": 12,
-  "format": "mock-text"
+  "format": "mock-text",
+  "recordingMode": "press-hold",
+  "isLocked": false
 }
 ```
 
 #### 后续扩展
 
-接入真实录音后，请求体需要兼容以下字段：
+接入正式录音能力后，请求体需要兼容以下字段：
 
 - `audioFile`
 - `duration`
 - `format`
+- `recordingMode`
+- `isLocked`
+- `segmentIndex`
+- `segmentCount`
+- `startedAt`
+- `endedAt`
 
 #### 返回体
 ```json
 {
   "messageId": "msg_xxx",
   "transcript": "这是语音转写后的内容",
+  "segments": [
+    {
+      "segmentIndex": 1,
+      "segmentTitle": "第1段",
+      "duration": 58,
+      "transcript": "这是第一段整理后的转写",
+      "time": "09:41"
+    }
+  ],
   "nextQuestion": "这件事大概发生在什么时候？",
   "canGenerate": false,
   "answerCount": 1
 }
 ```
+
+#### 分段规则说明
+
+- 当单次连续录音时间较长时，服务端应将录音按语义边界自动切分为约 1 分钟一段
+- 自动切分应尽量避开一句话中间，优先选择自然停顿、句末或语义边界
+- 若本次录音未触发分段，`segments` 可仅返回 1 条
 
 ## 3. 跳过当前问题
 

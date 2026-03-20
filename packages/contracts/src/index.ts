@@ -1,6 +1,8 @@
 export type BookType = 'novel' | 'autobiography' | 'memoir' | 'family-story';
 export type SessionStatus = 'collecting' | 'preview-ready' | 'completed';
 export type BookStatus = 'preview' | 'paid' | 'exported';
+export type RecordingMode = 'press-hold' | 'locked';
+export type RecordingStatus = 'idle' | 'recording' | 'locked' | 'paused';
 
 export interface BookTypeOption {
   key: BookType;
@@ -29,6 +31,20 @@ export interface SessionAudioUploadRequest {
   transcript?: string;
   duration?: number;
   format?: string;
+  recordingMode?: RecordingMode;
+  isLocked?: boolean;
+  segmentIndex?: number;
+  segmentCount?: number;
+  startedAt?: string;
+  endedAt?: string;
+}
+
+export interface SessionAudioSegment {
+  segmentIndex: number;
+  segmentTitle: string;
+  duration: number;
+  transcript: string;
+  time: string;
 }
 
 export interface SessionMessage {
@@ -36,6 +52,13 @@ export interface SessionMessage {
   role: 'assistant' | 'user' | 'system';
   content: string;
   createdAt: string;
+  displayType?: 'text' | 'audio';
+  transcript?: string;
+  duration?: number;
+  timeLabel?: string;
+  recordingMode?: RecordingMode;
+  statusLabel?: string;
+  segments?: SessionAudioSegment[];
 }
 
 export interface SessionDetailResponse {
@@ -51,6 +74,7 @@ export interface SessionDetailResponse {
 export interface AudioUploadResponse {
   messageId: string;
   transcript: string;
+  segments: SessionAudioSegment[];
   nextQuestion: string;
   canGenerate: boolean;
   answerCount: number;

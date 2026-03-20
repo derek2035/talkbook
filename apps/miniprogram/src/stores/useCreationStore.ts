@@ -37,7 +37,12 @@ export const useCreationStore = defineStore('creation', {
         id: `${payload.sessionId}_first_question`,
         role: 'assistant',
         content: payload.firstQuestion,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        timeLabel: new Date().toLocaleTimeString('zh-CN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        })
       };
 
       this.sessionId = payload.sessionId;

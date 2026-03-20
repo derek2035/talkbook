@@ -3,6 +3,7 @@ import type {
   BookType,
   MyBooksResponse,
   PreviewGenerateResponse,
+  SessionAudioUploadRequest,
   SessionCreateResponse,
   SessionDetailResponse,
   SkipQuestionResponse
@@ -13,7 +14,7 @@ const BASE_URL = 'http://localhost:3000/api/v1';
 interface RequestOptions {
   path: string;
   method?: 'GET' | 'POST';
-  data?: Record<string, unknown>;
+  data?: string | Record<string, unknown> | ArrayBuffer;
 }
 
 interface ErrorPayload {
@@ -56,11 +57,11 @@ export function getSession(sessionId: string) {
   });
 }
 
-export function postAudioTranscript(sessionId: string, transcript: string) {
+export function postAudioTranscript(sessionId: string, payload: SessionAudioUploadRequest) {
   return request<AudioUploadResponse>({
     path: `/sessions/${sessionId}/audio`,
     method: 'POST',
-    data: { transcript }
+    data: payload as Record<string, unknown>
   });
 }
 

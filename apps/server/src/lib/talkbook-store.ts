@@ -7,6 +7,8 @@ import {
   type MyBooksResponse,
   type PreviewGenerateResponse,
   type PreviewOutlineItem,
+  type SessionAudioSegment,
+  type SessionAudioUploadRequest,
   type SessionDetailResponse,
   type SessionMessage,
   type SessionStatus
@@ -63,16 +65,31 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function toTimeLabel(iso: string) {
+  const date = new Date(iso);
+  const hours = `${date.getHours()}`.padStart(2, '0');
+  const minutes = `${date.getMinutes()}`.padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
 function makeId(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function createMessage(role: SessionMessage['role'], content: string): SessionMessage {
+function createMessage(
+  role: SessionMessage['role'],
+  content: string,
+  overrides: Partial<SessionMessage> = {}
+): SessionMessage {
+  const createdAt = overrides.createdAt ?? nowIso();
+
   return {
     id: makeId('msg'),
     role,
     content,
-    createdAt: nowIso()
+    createdAt,
+    timeLabel: toTimeLabel(createdAt),
+    ...overrides
   };
 }
 
@@ -122,6 +139,70 @@ function compactText(value: string, limit = 22) {
   }
 
   return normalized.length > limit ? `${normalized.slice(0, limit)}...` : normalized;
+}
+
+function splitIntoSentences(transcript: string) {
+  const normalized = transcript.replace(/\s+/g, ' ').trim();
+  if (!normalized) {
+    return [];
+  }
+
+  const sentences = normalized
+    .split(/(?<=[。！？；!?;])/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (sentences.length > 0) {
+    return sentences;
+  }
+
+  return normalized
+    .split(/[，,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function buildSegments(transcript: string, duration: number, createdAt: string): SessionAudioSegment[] {
+  const normalizedDuration = Math.max(1, Math.round(duration || 12));
+  const targetSegmentCount = Math.max(1, Math.ceil(normalizedDuration / 60));
+  const sentences = splitIntoSentences(transcript);
+  const workingSentences = sentences.length > 0 ? sentences : [transcript.trim()];
+  const chunkSize = Math.max(1, Math.ceil(workingSentences.length / targetSegmentCount));
+
+  const sentenceGroups: string[][] = [];
+
+  for (let index = 0; index < workingSentences.length; index += chunkSize) {
+    sentenceGroups.push(workingSentences.slice(index, index + chunkSize));
+  }
+
+  const segments = sentenceGroups.map((group, index) => {
+    const segmentCount = sentenceGroups.length;
+    const remaining = normalizedDuration - Math.floor(normalizedDuration / segmentCount) * index;
+    const segmentDuration =
+      index === segmentCount - 1
+        ? remaining
+        : Math.max(1, Math.round(normalizedDuration / segmentCount));
+
+    return {
+      segmentIndex: index + 1,
+      segmentTitle: `第${index + 1}段`,
+      duration: segmentDuration,
+      transcript: group.join(' ').trim(),
+      time: toTimeLabel(createdAt)
+    };
+  });
+
+  return segments.length > 0
+    ? segments
+    : [
+        {
+          segmentIndex: 1,
+          segmentTitle: '第1段',
+          duration: normalizedDuration,
+          transcript,
+          time: toTimeLabel(createdAt)
+        }
+      ];
 }
 
 function buildTitle(session: SessionRecord, highlights: string[]) {
@@ -225,15 +306,32 @@ export function getSession(sessionId: string) {
   return session ? toSessionDetail(session) : null;
 }
 
-export function submitAudioTranscript(sessionId: string, transcript: string | undefined): AudioUploadResponse | null {
+export function submitAudioTranscript(
+  sessionId: string,
+  payload: SessionAudioUploadRequest | undefined
+): AudioUploadResponse | null {
   const session = sessions.get(sessionId);
 
   if (!session) {
     return null;
   }
 
-  const normalizedTranscript = transcript?.trim() || buildFallbackTranscript(session);
-  session.messages.push(createMessage('user', normalizedTranscript));
+  const normalizedTranscript = payload?.transcript?.trim() || buildFallbackTranscript(session);
+  const createdAt = nowIso();
+  const duration = Math.max(8, Math.round(payload?.duration ?? Math.max(12, normalizedTranscript.length * 1.8)));
+  const segments = buildSegments(normalizedTranscript, duration, createdAt);
+
+  session.messages.push(
+    createMessage('user', normalizedTranscript, {
+      createdAt,
+      displayType: 'audio',
+      transcript: normalizedTranscript,
+      duration,
+      recordingMode: payload?.isLocked ? 'locked' : payload?.recordingMode ?? 'press-hold',
+      statusLabel: payload?.isLocked ? '锁定录音' : '按住录音',
+      segments
+    })
+  );
   session.answerCount += 1;
 
   const nextQuestion = getNextQuestion(session);
@@ -243,6 +341,7 @@ export function submitAudioTranscript(sessionId: string, transcript: string | un
   return {
     messageId: session.messages[session.messages.length - 2]?.id ?? makeId('msg'),
     transcript: normalizedTranscript,
+    segments,
     nextQuestion,
     canGenerate: canGeneratePreview(session),
     answerCount: session.answerCount

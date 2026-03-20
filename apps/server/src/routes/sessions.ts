@@ -46,7 +46,7 @@ export function uploadAudioHandler(
   req: Request<{ sessionId: string }, AudioUploadResponse, SessionAudioUploadRequest>,
   res: Response<AudioUploadResponse | { error: string }>
 ) {
-  const result = submitAudioTranscript(req.params.sessionId, req.body?.transcript);
+  const result = submitAudioTranscript(req.params.sessionId, req.body);
 
   if (!result) {
     res.status(404).json({ error: 'Session not found' });

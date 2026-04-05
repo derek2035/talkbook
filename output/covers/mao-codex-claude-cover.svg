@@ -1,0 +1,113 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6F1E8"/>
+      <stop offset="1" stop-color="#E9EEF5"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1130 150) rotate(119.329) scale(674.145 911.608)">
+      <stop stop-color="#FFF4D3"/>
+      <stop offset="1" stop-color="#FFF4D3" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bookCover" x1="200" y1="160" x2="640" y2="640" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B6241F"/>
+      <stop offset="1" stop-color="#7E110E"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="280" y1="240" x2="680" y2="640" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F0E2"/>
+      <stop offset="1" stop-color="#E6DCC8"/>
+    </linearGradient>
+    <filter id="shadow" x="132" y="120" width="684" height="628" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="24"/>
+      <feGaussianBlur stdDeviation="28"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.25 0 0 0 0 0.11 0 0 0 0 0.08 0 0 0 0.23 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+    <filter id="badgeShadow" x="356" y="198" width="708" height="280" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="14"/>
+      <feGaussianBlur stdDeviation="16"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.08 0 0 0 0 0.1 0 0 0 0 0.16 0 0 0 0.18 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+    <linearGradient id="codexBadge" x1="426" y1="262" x2="760" y2="366" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111826"/>
+      <stop offset="1" stop-color="#202F43"/>
+    </linearGradient>
+    <linearGradient id="claudeBadge" x1="684" y1="342" x2="1028" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7ED"/>
+      <stop offset="1" stop-color="#FFE3C0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+  <path d="M0 790C198 728.667 349.333 718.667 454 760C558.667 801.333 683.333 812.667 828 794C972.667 775.333 1230 694 1600 551V900H0V790Z" fill="#D7E0EA" fill-opacity="0.55"/>
+
+  <g opacity="0.18">
+    <path d="M1264 76L1328 140" stroke="#C8B99A" stroke-width="2"/>
+    <path d="M1310 76L1374 140" stroke="#C8B99A" stroke-width="2"/>
+    <path d="M1356 76L1420 140" stroke="#C8B99A" stroke-width="2"/>
+  </g>
+
+  <g filter="url(#shadow)" transform="translate(130 120) rotate(-9 340 260)">
+    <path d="M182 474C308.755 486.724 434.578 495.67 560 502C592.35 503.633 618 478.258 618 446V120C618 90.7289 595.459 66.3504 566.301 64.0678C450.446 54.9985 334.8 46.4894 219.301 38.5405C186.678 36.2958 159 61.9288 159 94.6284V423C159 449.232 178.917 473.691 205.052 476.311L182 474Z" fill="url(#paper)"/>
+    <rect x="112" y="82" width="442" height="486" rx="12" fill="url(#bookCover)"/>
+    <rect x="132" y="103" width="404" height="444" rx="8" stroke="#E4B64F" stroke-width="4"/>
+    <rect x="154" y="126" width="360" height="24" fill="#D7A841" fill-opacity="0.22"/>
+    <rect x="154" y="176" width="360" height="2" fill="#E9C56A" fill-opacity="0.8"/>
+    <rect x="154" y="448" width="360" height="2" fill="#E9C56A" fill-opacity="0.8"/>
+    <rect x="124" y="88" width="30" height="472" fill="#6B0C09" fill-opacity="0.55"/>
+    <path d="M560 115C593 118 618 145 618 176V447C618 479 592 503 560 502L553 501V114L560 115Z" fill="#EDE4D2"/>
+    <path d="M557 149C583 152 600 172 600 198V438C600 464 583 484 557 483V149Z" fill="#F6F0E1"/>
+    <line x1="550" y1="150" x2="550" y2="481" stroke="#D1C5AE" stroke-width="2"/>
+    <text x="334" y="260" fill="#F8E5AF" font-size="66" font-weight="700" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">毛泽东</text>
+    <text x="334" y="342" fill="#F8E5AF" font-size="66" font-weight="700" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">选集</text>
+    <text x="334" y="408" fill="#F1D38A" font-size="26" font-weight="500" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">第一卷</text>
+    <circle cx="334" cy="465" r="28" stroke="#E4B64F" stroke-width="3"/>
+    <path d="M322 465L332 475L347 455" stroke="#E4B64F" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g filter="url(#badgeShadow)">
+    <g transform="translate(424 230) rotate(-8 168 52)">
+      <rect width="336" height="104" rx="28" fill="url(#codexBadge)"/>
+      <rect x="2" y="2" width="332" height="100" rx="26" stroke="#3A5668" stroke-width="2"/>
+      <g transform="translate(34 27)">
+        <path d="M28 0L55 15.5V46.5L28 62L1 46.5V15.5L28 0Z" fill="#47D6A3"/>
+        <path d="M18 20L28 14L38 20V32L28 38L18 32V20Z" fill="#0E1A28"/>
+        <path d="M28 14V0" stroke="#B2F3DE" stroke-width="2"/>
+        <path d="M55 15.5L38 20" stroke="#B2F3DE" stroke-width="2"/>
+        <path d="M38 44L55 46.5" stroke="#B2F3DE" stroke-width="2"/>
+      </g>
+      <text x="118" y="64" fill="#F3FBFF" font-size="42" font-weight="700" font-family="Inter, SF Pro Display, Helvetica Neue, Arial, sans-serif">Codex</text>
+    </g>
+
+    <g transform="translate(666 328) rotate(6 182 52)">
+      <rect width="364" height="104" rx="28" fill="url(#claudeBadge)"/>
+      <rect x="2" y="2" width="360" height="100" rx="26" stroke="#F0C999" stroke-width="2"/>
+      <g transform="translate(32 28)">
+        <rect x="2" y="4" width="18" height="40" rx="9" stroke="#D97706" stroke-width="4"/>
+        <rect x="34" y="4" width="18" height="40" rx="9" stroke="#D97706" stroke-width="4"/>
+        <path d="M20 24H34" stroke="#D97706" stroke-width="4" stroke-linecap="round"/>
+      </g>
+      <text x="102" y="64" fill="#6E3D12" font-size="36" font-weight="700" font-family="Inter, SF Pro Display, Helvetica Neue, Arial, sans-serif">Claude Code</text>
+    </g>
+  </g>
+
+  <g transform="translate(860 155)">
+    <text x="0" y="0" fill="#A22823" font-size="30" font-weight="700" letter-spacing="6" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">方法论封面</text>
+    <text x="0" y="112" fill="#182230" font-size="74" font-weight="800" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">毛泽东思想</text>
+    <text x="0" y="204" fill="#182230" font-size="74" font-weight="800" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">为什么适合指导</text>
+    <text x="0" y="304" fill="#0F172A" font-size="78" font-weight="800" font-family="Inter, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">Codex</text>
+    <text x="0" y="386" fill="#A5601D" font-size="54" font-weight="600" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">与</text>
+    <text x="72" y="386" fill="#7A4516" font-size="78" font-weight="800" font-family="Inter, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">Claude Code</text>
+    <path d="M0 432H560" stroke="#DDBA7A" stroke-width="4"/>
+    <text x="0" y="500" fill="#324255" font-size="34" font-weight="500" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">实事求是｜调查研究｜抓主要矛盾｜实践检验</text>
+  </g>
+
+  <text x="1210" y="826" fill="#6F7E92" font-size="24" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, sans-serif">Talkbook 封面提案</text>
+</svg>

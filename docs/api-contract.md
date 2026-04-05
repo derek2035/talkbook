@@ -7,6 +7,34 @@
 - 接口先围绕 MVP 主链路设计，不提前扩张。
 - MVP 第一阶段允许以前端文本模拟转写结果，后续再替换为真实语音上传。
 
+## 0. 微信登录
+
+### `POST /api/v1/auth/wechat/login`
+
+#### 请求体
+```json
+{
+  "code": "wx_login_code"
+}
+```
+
+#### 返回体
+```json
+{
+  "userId": "user_xxx",
+  "openId": "openid_xxx",
+  "nickname": "微信用户",
+  "avatarUrl": "https://example.com/avatar.png",
+  "token": "tk_xxx"
+}
+```
+
+#### 说明
+
+- 小程序端先调用 `wx.login` 获取 `code`
+- 服务端使用 `code` 换取用户身份，并返回业务 token
+- 本地联调阶段允许增加 mock 登录开关，但接口契约按微信登录闭环定义
+
 ## 1. 创建会话
 
 ### `POST /api/v1/sessions`
@@ -205,7 +233,6 @@
 
 ## 后续但不在当前 MVP 首批实现
 
-- 微信登录换取用户身份
 - 支付下单与支付回调
 - 完整版书稿导出
 - 会员权益校验

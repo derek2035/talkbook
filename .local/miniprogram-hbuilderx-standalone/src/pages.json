@@ -1,0 +1,24 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "style": { "navigationBarTitleText": "口书" }
+    },
+    {
+      "path": "pages/interview/index",
+      "style": { "navigationBarTitleText": "AI 采访" }
+    },
+    {
+      "path": "pages/preview/index",
+      "style": { "navigationBarTitleText": "书稿预览" }
+    },
+    {
+      "path": "pages/chapter/index",
+      "style": { "navigationBarTitleText": "章节预览" }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": { "navigationBarTitleText": "我的" }
+    }
+  ]
+}

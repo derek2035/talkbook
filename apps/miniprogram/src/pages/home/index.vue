@@ -1,125 +1,178 @@
 <template>
-  <view class="page">
-    <view class="hero">
-      <text class="eyebrow">Talkbook / 口书</text>
-      <text class="title">把一次次讲述，整理成一本真正的书。</text>
-      <text class="desc">先在本地跑通 MVP：选类型、模拟采访、生成目录预览。</text>
-      <view class="hero-meta">
-        <view class="meta-card">
-          <text class="meta-label">最近书稿</text>
-          <text class="meta-value">{{ bookCount }}</text>
-        </view>
-        <view class="meta-card">
-          <text class="meta-label">当前状态</text>
-          <text class="meta-value">{{ latestBookTitle }}</text>
+  <view class="tb-page tb-safe-bottom">
+    <view class="tb-content">
+      <view class="intro-card">
+        <text class="intro-card__title">通过对话，把珍贵回忆慢慢整理成一本书。</text>
+      </view>
+
+      <view class="section">
+        <text class="tb-section-title">选择书稿类型</text>
+        <view class="type-grid">
+          <button
+            v-for="item in bookTypes"
+            :key="item.key"
+            class="type-card"
+            :class="{ 'type-card--active': item.key === selectedBookType }"
+            @tap="choose(item.key)"
+          >
+            <text class="type-card__title">{{ item.label }}</text>
+            <text class="type-card__desc">{{ item.description }}</text>
+            <text v-if="item.key === selectedBookType" class="type-card__tag">已选择</text>
+          </button>
         </view>
       </view>
+
+      <text v-if="errorMessage" class="error-message">{{ errorMessage }}</text>
+
+      <button class="tb-primary-button start-button" :loading="creating" @tap="start">
+        开始创作
+      </button>
     </view>
 
-    <view class="card">
-      <text class="section-title">选择一本你想完成的书</text>
-      <view
-        v-for="item in bookTypes"
-        :key="item.key"
-        class="book-type"
-        :class="{ active: item.key === selectedBookType }"
-        @tap="choose(item.key)"
-      >
-        <text class="name">{{ item.label }}</text>
-        <text class="description">{{ item.description }}</text>
-      </view>
-    </view>
-
-    <text v-if="errorMessage" class="error">{{ errorMessage }}</text>
-    <button class="primary" :loading="creating" @tap="start">开始创作</button>
+    <BottomNav current="create" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import type { BookType } from '@talkbook/contracts';
 import { storeToRefs } from 'pinia';
 
-import { getMyBooks, postSession } from '../../services/api';
+import BottomNav from '../../components/BottomNav.vue';
+import { postSession } from '../../services/api';
+import { useAppStore } from '../../stores/useAppStore';
 import { useCreationStore } from '../../stores/useCreationStore';
 
-const store = useCreationStore();
-const { bookTypes, selectedBookType } = storeToRefs(store);
+const appStore = useAppStore();
+const creationStore = useCreationStore();
+const { bookTypes, selectedBookType } = storeToRefs(creationStore);
+
 const creating = ref(false);
 const errorMessage = ref('');
-const bookCount = ref(0);
-const latestBookTitle = computed(() => {
-  if (bookCount.value === 0) {
-    return '还没有生成预览';
-  }
+const pendingAutoStart = ref(false);
 
-  return latestBookLabel.value;
-});
-const latestBookLabel = ref('已有草稿');
+const canStart = computed(() => appStore.isLoggedIn);
 
 function choose(bookType: BookType) {
-  store.setBookType(bookType);
-}
-
-async function loadMyBooks() {
-  try {
-    const result = await getMyBooks();
-    bookCount.value = result.items.length;
-    latestBookLabel.value = result.items[0]?.title ?? '已有草稿';
-  } catch (error) {
-    console.error(error);
-  }
+  creationStore.setBookType(bookType);
 }
 
 async function start() {
+  if (!canStart.value) {
+    pendingAutoStart.value = true;
+    uni.navigateTo({
+      url: `/pages/login/index?redirect=${encodeURIComponent('/pages/home/index?autoStart=1')}`
+    });
+    return;
+  }
+
   creating.value = true;
   errorMessage.value = '';
 
   try {
     const session = await postSession(selectedBookType.value);
-    store.setSession(session);
-    uni.navigateTo({ url: '/pages/interview/index' });
+    creationStore.setSession(session);
+    uni.navigateTo({
+      url: `/pages/interview/index?sessionId=${session.sessionId}`
+    });
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '创建会话失败，请确认本地服务端已启动。';
+    errorMessage.value =
+      error instanceof Error ? error.message : '创建会话失败，请确认本地服务端已启动。';
   } finally {
     creating.value = false;
   }
 }
 
+onLoad((query) => {
+  pendingAutoStart.value = query?.autoStart === '1';
+});
+
 onShow(() => {
-  loadMyBooks();
+  if (pendingAutoStart.value && appStore.isLoggedIn && !creating.value) {
+    pendingAutoStart.value = false;
+    start();
+  }
 });
 </script>
 
 <style scoped>
-.page { padding: 32rpx; }
-.hero {
-  margin: 24rpx 0 32rpx;
+.intro-card {
   padding: 36rpx 32rpx;
-  border-radius: 32rpx;
-  background: linear-gradient(140deg, #102542 0%, #1f3c88 52%, #d4a373 100%);
-  color: #fffdf8;
+  border-radius: 36rpx;
+  background: linear-gradient(180deg, #fff1ed 0%, #fdeae4 100%);
 }
-.eyebrow { display:block; font-size:22rpx; letter-spacing:4rpx; opacity:0.78; text-transform:uppercase; }
-.title { display:block; margin-top:16rpx; font-size:54rpx; line-height:1.2; font-weight:700; }
-.desc { display:block; margin-top:18rpx; color:rgba(255, 253, 248, 0.82); font-size:28rpx; line-height:1.6; }
-.hero-meta { display:flex; gap:16rpx; margin-top:28rpx; }
-.meta-card {
-  flex:1;
-  padding:20rpx;
-  border-radius:24rpx;
-  background:rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12rpx);
+
+.intro-card__title {
+  display: block;
+  font-size: 46rpx;
+  line-height: 1.28;
+  font-weight: 700;
+  color: var(--tb-primary);
 }
-.meta-label { display:block; font-size:22rpx; opacity:0.74; }
-.meta-value { display:block; margin-top:8rpx; font-size:28rpx; font-weight:600; }
-.card { background:#fffdf9; border-radius:28rpx; padding:24rpx; box-shadow:0 18rpx 40rpx rgba(16, 37, 66, 0.08); }
-.section-title { display:block; margin-bottom:20rpx; font-size:32rpx; font-weight:600; }
-.book-type { border:2rpx solid #e6ded2; border-radius:24rpx; padding:24rpx; margin-bottom:16rpx; background:#fff; }
-.book-type.active { border-color:#1f3c88; background:#eef3ff; }
-.name { display:block; font-size:30rpx; font-weight:600; }
-.description { display:block; margin-top:8rpx; color:#5b6578; font-size:26rpx; line-height:1.5; }
-.error { display:block; margin-top:20rpx; color:#b42318; font-size:24rpx; }
-.primary { margin-top:28rpx; background:#102542; color:#fff; border-radius:999rpx; }
+
+.section {
+  margin-top: 28rpx;
+}
+
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 18rpx;
+}
+
+.type-card {
+  min-height: 228rpx;
+  padding: 26rpx;
+  border-radius: 28rpx;
+  background: var(--tb-surface-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.type-card--active {
+  background: #ffd9cd;
+  box-shadow: inset 0 0 0 2rpx rgba(155, 63, 30, 0.18);
+}
+
+.type-card__title {
+  font-size: 32rpx;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--tb-text);
+}
+
+.type-card__desc {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: var(--tb-text-muted);
+}
+
+.type-card__tag {
+  margin-top: 18rpx;
+  padding: 8rpx 16rpx;
+  border-radius: var(--tb-radius-pill);
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--tb-secondary);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.error-message {
+  display: block;
+  margin-top: 22rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: var(--tb-danger);
+}
+
+.start-button {
+  width: 100%;
+  margin-top: 28rpx;
+}
 </style>

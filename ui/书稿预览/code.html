@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-Hans"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Talkbook - 书稿预览</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-low": "#fff1ed",
+              "inverse-on-surface": "#ffede8",
+              "error-container": "#ffdad6",
+              "tertiary": "#00666e",
+              "secondary-fixed-dim": "#f9b7a2",
+              "inverse-primary": "#ffb59c",
+              "primary-fixed": "#ffdbd0",
+              "on-tertiary": "#ffffff",
+              "secondary": "#845241",
+              "on-primary": "#ffffff",
+              "on-primary-fixed-variant": "#7f2b09",
+              "surface-container": "#fdeae4",
+              "on-error-container": "#93000a",
+              "primary-container": "#bb5733",
+              "surface": "#fff8f6",
+              "surface-container-high": "#f8e4de",
+              "surface-variant": "#f2ded9",
+              "on-surface-variant": "#56423c",
+              "on-tertiary-fixed-variant": "#004f55",
+              "secondary-fixed": "#ffdbd0",
+              "error": "#ba1a1a",
+              "outline": "#89726b",
+              "on-tertiary-fixed": "#002023",
+              "on-secondary-fixed": "#341105",
+              "outline-variant": "#ddc0b8",
+              "on-secondary-fixed-variant": "#683b2b",
+              "on-secondary-container": "#7a4a39",
+              "surface-container-lowest": "#ffffff",
+              "secondary-container": "#ffbda7",
+              "on-secondary": "#ffffff",
+              "primary-fixed-dim": "#ffb59c",
+              "on-tertiary-container": "#f5feff",
+              "on-surface": "#231916",
+              "tertiary-container": "#00818b",
+              "on-error": "#ffffff",
+              "surface-dim": "#e9d6d0",
+              "on-primary-container": "#fffbff",
+              "tertiary-fixed-dim": "#73d5e0",
+              "surface-container-highest": "#f2ded9",
+              "surface-bright": "#fff8f6",
+              "background": "#fff8f6",
+              "on-primary-fixed": "#390c00",
+              "surface-tint": "#9e4220",
+              "inverse-surface": "#392e2a",
+              "tertiary-fixed": "#90f2fc",
+              "primary": "#9b3f1e",
+              "on-background": "#231916"
+            },
+            fontFamily: {
+              "headline": ["Public Sans", "sans-serif"],
+              "body": ["Public Sans", "sans-serif"],
+              "label": ["Public Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "1rem", "xl": "1.25rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col pb-24">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-50 bg-[#FFF8F6] dark:bg-neutral-950 shadow-sm shadow-[#9B3F1E]/5 h-16 flex items-center px-4 transition-colors">
+<div class="flex-none w-12">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#FDEAE4] dark:hover:bg-neutral-800 active:scale-95 duration-200 text-[#9B3F1E] dark:text-[#FFBDA7]">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+</div>
+<div class="flex-grow flex justify-center">
+<h1 class="text-[#9B3F1E] dark:text-[#FFBDA7] font-public-sans text-xl font-semibold tracking-tight">书稿预览</h1>
+</div>
+<div class="flex-none w-12">
+<!-- Spacer for symmetry to keep title perfectly centered -->
+</div>
+</header>
+<main class="flex-grow px-4 py-6 space-y-6 max-w-2xl mx-auto w-full">
+<!-- 书名建议 Section -->
+<section class="space-y-3">
+<h2 class="text-on-surface-variant font-semibold text-sm tracking-wider uppercase px-2">书名</h2>
+<div class="bg-surface-container-high rounded-lg p-5 shadow-sm flex justify-between items-center gap-4">
+<p class="text-primary font-bold text-2xl leading-tight">我的童年往事</p>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 active:scale-95 transition-all flex-shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">edit</span>
+</button>
+</div>
+</section>
+<!-- 一句话简介 Section -->
+<section class="space-y-3">
+<h2 class="text-on-surface-variant font-semibold text-sm tracking-wider uppercase px-2">一句话简介</h2>
+<div class="bg-surface-container rounded-lg p-5 flex justify-between items-start gap-4">
+<p class="text-on-surface leading-relaxed text-lg">
+                    记录在老城区弄堂里的平凡岁月与温情瞬间。
+                </p>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 active:scale-95 transition-all flex-shrink-0 -mt-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">edit</span>
+</button>
+</div>
+</section>
+<!-- 章节目录 Section -->
+<section class="space-y-3">
+<div class="flex items-center justify-between px-2">
+<h2 class="text-on-surface-variant font-semibold text-sm tracking-wider uppercase">章节目录</h2>
+<span class="text-xs text-outline font-medium">共 4 章</span>
+</div>
+<div class="bg-surface-container-low rounded-lg overflow-hidden">
+<div class="divide-y divide-outline-variant/20">
+<div class="p-4 flex items-center gap-4 hover:bg-surface-container transition-colors active:scale-[0.99] duration-200">
+<span class="text-primary font-bold w-6">01</span>
+<span class="text-on-surface font-medium">弄堂里的早晨</span>
+</div>
+<div class="p-4 flex items-center gap-4 hover:bg-surface-container transition-colors active:scale-[0.99] duration-200">
+<span class="text-primary font-bold w-6">02</span>
+<span class="text-on-surface font-medium">外公的菜园</span>
+</div>
+<div class="p-4 flex items-center gap-4 hover:bg-surface-container transition-colors active:scale-[0.99] duration-200">
+<span class="text-primary font-bold w-6">03</span>
+<span class="text-on-surface font-medium">夏日的蒲扇与蝉鸣</span>
+</div>
+<div class="p-4 flex items-center gap-4 hover:bg-surface-container transition-colors active:scale-[0.99] duration-200">
+<span class="text-primary font-bold w-6">04</span>
+<span class="text-on-surface font-medium">老式收音机里的京剧</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 完整版待解锁 Section -->
+<section class="mt-8">
+<div class="bg-primary/5 rounded-xl border border-dashed border-primary/20 p-6 text-center">
+<div class="mb-3">
+<span class="material-symbols-outlined text-primary text-3xl">lock_open</span>
+</div>
+<h3 class="text-primary font-semibold text-lg mb-1">完整版待解锁</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed max-w-xs mx-auto">
+                    您已完成初期创作，继续添加更多回忆素材，即可解锁自动生成的完整传记初稿。
+                </p>
+</div>
+</section>
+<!-- Spacer for bottom navigation safety -->
+<div class="h-24"></div>
+</main>
+<!-- Fixed Bottom Actions -->
+<div class="fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-md px-4 py-4 md:py-6 flex flex-col gap-3 max-w-2xl mx-auto border-t border-outline-variant/10">
+<button class="w-full h-[3.5rem] bg-primary text-on-primary font-semibold rounded-full flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+            继续补充素材
+        </button>
+<button class="w-full h-[3.5rem] border border-outline text-primary font-semibold rounded-full flex items-center justify-center gap-2 bg-transparent hover:bg-surface-container-high transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">share</span>
+            分享书稿
+        </button>
+</div>
+</body></html>

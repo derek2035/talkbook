@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Talkbook - 开启您的创作旅程</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-container": "#f5feff",
+              "primary-fixed": "#ffdbd0",
+              "inverse-primary": "#ffb59c",
+              "tertiary": "#00666e",
+              "on-tertiary-fixed-variant": "#004f55",
+              "secondary": "#845241",
+              "on-tertiary": "#ffffff",
+              "primary": "#9b3f1e",
+              "on-tertiary-fixed": "#002023",
+              "tertiary-container": "#00818b",
+              "error": "#ba1a1a",
+              "tertiary-fixed-dim": "#73d5e0",
+              "surface-container-low": "#fff1ed",
+              "surface-tint": "#9e4220",
+              "surface-variant": "#f2ded9",
+              "on-secondary-fixed-variant": "#683b2b",
+              "error-container": "#ffdad6",
+              "surface-container": "#fdeae4",
+              "on-primary-fixed-variant": "#7f2b09",
+              "outline-variant": "#ddc0b8",
+              "on-secondary-container": "#7a4a39",
+              "on-secondary-fixed": "#341105",
+              "surface-container-highest": "#f2ded9",
+              "secondary-fixed-dim": "#f9b7a2",
+              "inverse-surface": "#392e2a",
+              "on-primary-fixed": "#390c00",
+              "secondary-container": "#ffbda7",
+              "surface-container-lowest": "#ffffff",
+              "surface-dim": "#e9d6d0",
+              "primary-fixed-dim": "#ffb59c",
+              "on-surface": "#231916",
+              "on-error-container": "#93000a",
+              "on-primary-container": "#fffbff",
+              "on-surface-variant": "#56423c",
+              "outline": "#89726b",
+              "on-error": "#ffffff",
+              "surface": "#fff8f6",
+              "on-primary": "#ffffff",
+              "on-secondary": "#ffffff",
+              "surface-bright": "#fff8f6",
+              "on-background": "#231916",
+              "inverse-on-surface": "#ffede8",
+              "surface-container-high": "#f8e4de",
+              "secondary-fixed": "#ffdbd0",
+              "primary-container": "#bb5733",
+              "tertiary-fixed": "#90f2fc",
+              "background": "#fff8f6"
+            },
+            fontFamily: {
+              "headline": ["Public Sans", "sans-serif"],
+              "body": ["Public Sans", "sans-serif"],
+              "label": ["Public Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface font-body min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-40 bg-[#FFF8F6] dark:bg-stone-950">
+<div class="flex items-center justify-between px-4 h-16 w-full max-w-screen-xl mx-auto">
+<div class="w-10"></div> <!-- Spacer for leading empty side -->
+<h1 class="font-public-sans headline-md text-[1.75rem] tracking-tight font-semibold text-[#9B3F1E] dark:text-[#FFBDA7]">口书</h1>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full text-[#9B3F1E] dark:text-[#FFBDA7] font-bold hover:bg-[#FDEAE4] dark:hover:bg-stone-800 transition-colors active:scale-95 duration-200"><span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="text-sm font-medium">微信登录</span>
+</button>
+</div>
+</header>
+<main class="flex-grow w-full max-w-screen-md mx-auto px-6 pt-8 pb-32">
+<!-- Value Statement -->
+<section class="mb-10">
+<h2 class="text-[1.75rem] font-semibold leading-tight text-primary tracking-tight">
+                通过对话，将珍贵回忆<br/>化成人生书稿
+            </h2>
+</section>
+<!-- Book Types Section: Bento Grid / Asymmetric Layout -->
+<section class="grid grid-cols-2 gap-4 mb-10">
+<!-- 小说 -->
+<div class="bg-surface-container-high p-6 rounded-lg flex flex-col justify-between min-h-[160px] active:scale-95 transition-transform cursor-pointer">
+<div>
+<span class="material-symbols-outlined text-primary mb-3" data-icon="auto_stories">auto_stories</span>
+<h3 class="text-lg font-bold text-on-surface mb-1">小说</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">虚构与现实交织，谱写动人篇章</p>
+</div>
+</div>
+<!-- 自传 -->
+<div class="bg-surface-container-high p-6 rounded-lg flex flex-col justify-between min-h-[160px] active:scale-95 transition-transform cursor-pointer">
+<div>
+<span class="material-symbols-outlined text-primary mb-3" data-icon="person_book">person_book</span>
+<h3 class="text-lg font-bold text-on-surface mb-1">自传</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">亲历岁月流转，记录个人传奇</p>
+</div>
+</div>
+<!-- 回忆录 -->
+<div class="bg-surface-container-high p-6 rounded-lg flex flex-col justify-between min-h-[160px] active:scale-95 transition-transform cursor-pointer">
+<div>
+<span class="material-symbols-outlined text-primary mb-3" data-icon="history_edu">history_edu</span>
+<h3 class="text-lg font-bold text-on-surface mb-1">回忆录</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">捕捉流年碎影，留存永恒瞬间</p>
+</div>
+</div>
+<!-- 家族故事 -->
+<div class="bg-surface-container-high p-6 rounded-lg flex flex-col justify-between min-h-[160px] active:scale-95 transition-transform cursor-pointer">
+<div>
+<span class="material-symbols-outlined text-primary mb-3" data-icon="family_history">family_history</span>
+<h3 class="text-lg font-bold text-on-surface mb-1">家族故事</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">传承门楣家风，延续血脉亲情</p>
+</div>
+</div>
+</section>
+<!-- Primary Action -->
+<section class="flex justify-center">
+<button class="w-full max-w-xs h-14 bg-primary text-on-primary rounded-full font-semibold text-lg flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+                开始创作
+            </button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-8 pt-3 bg-[#F8E4DE] dark:bg-stone-900 rounded-t-lg shadow-[0_-2px_8px_rgba(155,63,30,0.08)]">
+<!-- Destination: 创作 (Active) -->
+<div class="flex flex-col items-center justify-center bg-[#FFBDA7] dark:bg-[#9B3F1E]/30 text-[#7A4A39] dark:text-[#FFBDA7] rounded-2xl px-8 py-1 active:scale-95 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="edit_note" style="font-variation-settings: 'FILL' 1;">edit_note</span>
+<span class="font-public-sans text-sm font-medium mt-1">创作</span>
+</div>
+<!-- Destination: 我的书稿 (Inactive) -->
+<div class="flex flex-col items-center justify-center text-[#7A4A39] dark:text-stone-400 px-8 py-1 hover:bg-[#FDEAE4] dark:hover:bg-stone-800 rounded-2xl transition-colors active:scale-95 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-public-sans text-sm font-medium mt-1">我的书稿</span>
+</div>
+</nav>
+<!-- Spacing for Bottom Nav -->
+<div class="h-20"></div>
+</body></html>

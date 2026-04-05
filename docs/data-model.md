@@ -6,20 +6,20 @@
 
 ## MVP 身份策略说明
 
-在正式登录接入前，MVP 第一阶段允许采用匿名用户或本地调试用户。
+MVP 产品流要求用户先完成微信登录，再进入创作链路。
 
 因此：
 
-- `openId` 在当前阶段可以为空
-- `userId` 在 `sessions`、`books`、`orders` 中可以先作为预留字段
-- 第一阶段可先用内存存储或本地 mock 数据完成主链路验证
+- 线上与提测环境中，`openId` 与 `userId` 必须可落库并参与会话归属
+- 本地联调阶段允许使用 mock 登录数据，但字段结构必须与正式微信登录保持一致
+- `sessions`、`books`、`orders` 均按有用户归属设计，不再按匿名模式设计主流程
 
 ## 1. User
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | id | string | 用户 ID |
-| openId | string / nullable | 微信 openId，正式登录后接入 |
+| openId | string | 微信 openId |
 | nickname | string | 用户昵称 |
 | avatarUrl | string | 头像 |
 | membershipStatus | enum | 会员状态 |
@@ -30,7 +30,7 @@
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | id | string | 会话 ID |
-| userId | string / nullable | 所属用户，MVP 可为空 |
+| userId | string | 所属用户 |
 | bookType | enum | 书籍类型 |
 | status | enum | collecting / preview-ready / completed |
 | currentQuestion | text | 当前问题 |
@@ -55,7 +55,7 @@
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | id | string | 书稿 ID |
-| userId | string / nullable | 所属用户，MVP 可为空 |
+| userId | string | 所属用户 |
 | sessionId | string | 来源会话 |
 | title | string | 书名 |
 | subtitle | string | 副标题 |
@@ -101,6 +101,6 @@ Book 1---n Order
 ## MVP 阶段的实现建议
 
 - 第一版数据库可以只先建 `users`、`sessions`、`messages`、`books`、`chapters`。
-- 如果登录体系尚未接入，`userId` 相关字段可先预留不强制落库。
+- 本地 mock 登录返回的 `userId/openId` 字段也必须参与接口联调与数据关联验证。
 - `orders` 可以在打通内容预览后再正式接入。
 - 如果赶时间，章节正文可先作为异步生成任务，先返回目录和摘要。

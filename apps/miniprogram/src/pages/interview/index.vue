@@ -1,173 +1,238 @@
 <template>
-  <view class="page">
-    <view class="hero">
-      <text class="eyebrow">Talkbook 采访</text>
-      <text class="title">{{ selectedBookTypeLabel }}</text>
-      <text class="subtitle">支持锁定录音、语音回放和文字记录切换，长录音会自动整理成更易回看的片段。</text>
-    </view>
-
-    <view class="panel">
-      <text class="label">当前会话</text>
-      <text class="value">{{ sessionId || '尚未创建' }}</text>
-      <text class="tip">已回答 {{ answerCount }} 次，{{ canGenerate ? '可以生成书稿预览' : '至少完成 2 次回答后可生成预览' }}</text>
-    </view>
-
-    <view class="panel">
-      <text class="label">当前提问</text>
-      <text class="question">{{ currentQuestion || '开始创作后会出现第一问。' }}</text>
-    </view>
-
-    <view class="panel">
-      <view class="panel-header">
-        <text class="label">采访记录</text>
-        <view class="view-switch">
-          <view
-            class="view-tab"
-            :class="{ active: activeView === 'audio' }"
-            @tap="activeView = 'audio'"
-          >
-            语音播放
-          </view>
-          <view
-            class="view-tab"
-            :class="{ active: activeView === 'text' }"
-            @tap="activeView = 'text'"
-          >
-            文字记录
-          </view>
+  <view class="tb-page">
+    <scroll-view scroll-y class="interview-scroll">
+      <view class="tb-content interview-content">
+        <view class="context-row">
+          <text class="tb-chip tb-chip--soft">{{ selectedBookTypeLabel }}</text>
+          <text class="tb-chip tb-chip--soft">会话 {{ sessionShortId }}</text>
+          <text class="tb-chip" :class="canGenerate ? 'tb-chip--warm' : 'tb-chip--soft'">
+            {{ canGenerate ? '可生成预览' : `已回答 ${answerCount} 次` }}
+          </text>
         </view>
-      </view>
 
-      <view v-if="messages.length" class="message-list">
-        <view
-          v-for="message in messages"
-          :key="message.id"
-          class="message-item"
-          :class="message.role"
-        >
-          <view class="message-meta">
-            <text class="message-role">{{ message.role === 'assistant' ? '采访助手' : '我的讲述' }}</text>
-            <text class="message-time">{{ message.timeLabel || formatMessageTime(message.createdAt) }}</text>
+        <view class="question-card">
+          <text class="question-card__eyebrow">本轮问题</text>
+          <text class="question-card__title">{{ currentQuestion || '开始创作后会出现第一问。' }}</text>
+          <text class="question-card__tip">
+            {{
+              canGenerate
+                ? '素材已经达到预览标准，可以继续补充更多细节，也可以直接生成书稿预览。'
+                : '先回答当前问题，连续积累两次有效回答后会解锁预览。'
+            }}
+          </text>
+        </view>
+
+        <view class="section">
+          <view class="section-head">
+            <text class="section-head__title">采访记录</text>
+            <text class="section-head__tip">语音和文字会一起保留，方便回听和整理</text>
           </view>
 
-          <template v-if="message.role === 'assistant' || activeView === 'text'">
-            <text class="message-content">{{ message.transcript || message.content }}</text>
-          </template>
+          <view v-if="messages.length" class="timeline">
+            <view
+              v-for="message in messages"
+              :key="message.id"
+              class="message-card"
+              :class="message.role === 'assistant' ? 'message-card--assistant' : 'message-card--user'"
+            >
+              <view class="message-card__head">
+                <text class="message-card__author">
+                  {{ message.role === 'assistant' ? '采访助手' : '我的讲述' }}
+                </text>
+                <text class="message-card__time">{{ message.timeLabel || formatMessageTime(message.createdAt) }}</text>
+              </view>
 
-          <template v-else>
-            <view v-if="message.segments?.length" class="segment-list">
-              <view
-                v-for="segment in message.segments"
-                :key="`${message.id}_${segment.segmentIndex}`"
-                class="segment-card"
-              >
-                <view class="segment-head">
-                  <text class="segment-title">{{ segment.segmentTitle }}</text>
-                  <text class="segment-time">{{ segment.time }}</text>
-                </view>
-                <view class="segment-player">
-                  <button class="play-button" size="mini" @tap="togglePlayback(`${message.id}_${segment.segmentIndex}`)">
-                    {{ playingSegmentId === `${message.id}_${segment.segmentIndex}` ? '暂停' : '播放' }}
-                  </button>
-                  <view class="wave-track">
-                    <view class="wave-progress" :style="{ width: playingSegmentId === `${message.id}_${segment.segmentIndex}` ? '68%' : '36%' }" />
+              <view v-if="message.role === 'assistant'" class="assistant-bubble">
+                <text class="assistant-bubble__text">{{ message.content }}</text>
+              </view>
+
+              <view v-else class="response-card">
+                <view class="response-card__block">
+                  <view class="response-card__head">
+                    <text class="response-card__label">文字记录</text>
+                    <text class="response-card__meta">{{ message.statusLabel || '已保存' }}</text>
                   </view>
-                  <text class="segment-duration">{{ formatDuration(segment.duration) }}</text>
+                  <text class="response-card__text">{{ message.transcript || message.content }}</text>
                 </view>
-                <text class="segment-transcript">{{ segment.transcript }}</text>
+
+                <view class="response-card__block">
+                  <view class="response-card__head">
+                    <text class="response-card__label">语音分段</text>
+                    <text class="response-card__meta">{{ buildSegmentMeta(message) }}</text>
+                  </view>
+
+                  <view v-if="message.segments?.length" class="segment-list">
+                    <view
+                      v-for="segment in message.segments"
+                      :key="`${message.id}_${segment.segmentIndex}`"
+                      class="segment-item"
+                    >
+                      <view class="segment-item__head">
+                        <text class="segment-item__title">{{ segment.segmentTitle }}</text>
+                        <text class="segment-item__duration">{{ formatDuration(segment.duration) }}</text>
+                      </view>
+                      <view class="segment-item__player">
+                        <button
+                          class="segment-item__button"
+                          @tap="togglePlayback(`${message.id}_${segment.segmentIndex}`)"
+                        >
+                          {{ playingSegmentId === `${message.id}_${segment.segmentIndex}` ? '暂停' : '播放' }}
+                        </button>
+                        <view class="segment-item__track">
+                          <view
+                            class="segment-item__progress"
+                            :style="{ width: playingSegmentId === `${message.id}_${segment.segmentIndex}` ? '70%' : '38%' }"
+                          />
+                        </view>
+                      </view>
+                      <text class="segment-item__text">{{ segment.transcript }}</text>
+                    </view>
+                  </view>
+
+                  <view v-else class="segment-item">
+                    <view class="segment-item__head">
+                      <text class="segment-item__title">完整录音</text>
+                      <text class="segment-item__duration">{{ formatDuration(message.duration || 12) }}</text>
+                    </view>
+                    <view class="segment-item__player">
+                      <button class="segment-item__button" @tap="togglePlayback(message.id)">
+                        {{ playingSegmentId === message.id ? '暂停' : '播放' }}
+                      </button>
+                      <view class="segment-item__track">
+                        <view
+                          class="segment-item__progress"
+                          :style="{ width: playingSegmentId === message.id ? '70%' : '38%' }"
+                        />
+                      </view>
+                    </view>
+                    <text class="segment-item__text">{{ message.transcript || message.content }}</text>
+                  </view>
+                </view>
               </view>
             </view>
-
-            <view v-else class="segment-card">
-              <view class="segment-player">
-                <button class="play-button" size="mini" @tap="togglePlayback(message.id)">
-                  {{ playingSegmentId === message.id ? '暂停' : '播放' }}
-                </button>
-                <view class="wave-track">
-                  <view class="wave-progress" :style="{ width: playingSegmentId === message.id ? '68%' : '36%' }" />
-                </view>
-                <text class="segment-duration">{{ formatDuration(message.duration || 12) }}</text>
-              </view>
-              <text class="segment-transcript">{{ message.transcript || message.content }}</text>
-            </view>
-          </template>
-        </view>
-      </view>
-      <text v-else class="empty">还没有采访记录。</text>
-    </view>
-
-    <view class="panel">
-      <view class="panel-header">
-        <text class="label">录音与整理</text>
-        <text class="status-pill" :class="recordingStatus">{{ recordingStatusText }}</text>
-      </view>
-
-      <view class="recording-card">
-        <view class="status-row">
-          <view>
-            <text class="status-title">{{ recordingStatusTitle }}</text>
-            <text class="status-desc">{{ recordingStatusDesc }}</text>
           </view>
-          <text class="timer">{{ formatDuration(recordingDuration) }}</text>
+
+          <view v-else class="empty-card">
+            <text class="empty-card__title">还没有采访记录</text>
+            <text class="empty-card__text">先开始第一轮讲述，语音和文字记录都会出现在这里。</text>
+          </view>
         </view>
 
-        <view v-if="recordingStatus === 'recording' || recordingStatus === 'locked'" class="lock-banner">
-          <text class="lock-icon">🔒</text>
-          <text>已锁定录音，你可以持续讲述。当前录音结束后，系统会自动按语义切成约 1 分钟一段。</text>
+        <view class="section tb-card composer-card">
+          <view class="composer-card__head">
+            <view>
+              <text class="composer-card__title">回答这一问</text>
+              <text class="composer-card__desc">语音适合完整讲述，文字适合快速补充，二者会同时沉淀进采访记录。</text>
+            </view>
+            <view class="status-badge" :class="`status-badge--${recordingStatus}`">
+              {{ recordingStatusText }}
+            </view>
+          </view>
+
+          <view class="mode-switch">
+            <button
+              class="mode-switch__item"
+              :class="{ 'mode-switch__item--active': inputMode === 'audio' }"
+              @tap="inputMode = 'audio'"
+            >
+              语音录入
+            </button>
+            <button
+              class="mode-switch__item"
+              :class="{ 'mode-switch__item--active': inputMode === 'text' }"
+              @tap="inputMode = 'text'"
+            >
+              文字录入
+            </button>
+          </view>
+
+          <view v-if="inputMode === 'audio'" class="composer-body">
+            <view class="recorder-panel">
+              <view class="recorder-panel__timer">
+                <text class="recorder-panel__label">当前录音时长</text>
+                <text class="recorder-panel__value">{{ formatDuration(recordingDuration) }}</text>
+              </view>
+              <text class="recorder-panel__hint">
+                支持开始、暂停、继续、结束。录音结束后会按语义分段保存，便于后续回听。
+              </text>
+
+              <view class="recorder-panel__actions">
+                <button
+                  v-if="recordingStatus === 'idle'"
+                  class="tb-primary-button recorder-panel__button"
+                  :disabled="!sessionId"
+                  @tap="startRecording"
+                >
+                  开始录音
+                </button>
+
+                <template v-else-if="recordingStatus === 'recording' || recordingStatus === 'locked'">
+                  <button class="tb-secondary-button recorder-panel__button" @tap="pauseRecording">暂停录音</button>
+                  <button class="tb-primary-button recorder-panel__button" @tap="finishRecording">结束并保存</button>
+                </template>
+
+                <template v-else>
+                  <button class="tb-secondary-button recorder-panel__button" @tap="resumeRecording">继续录音</button>
+                  <button class="tb-primary-button recorder-panel__button" @tap="finishRecording">结束并保存</button>
+                </template>
+              </view>
+            </view>
+
+            <view class="notes-panel">
+              <text class="notes-panel__label">补充文字说明（可选）</text>
+              <textarea
+                v-model="audioNotes"
+                class="notes-panel__input"
+                maxlength="800"
+                placeholder="录音之外，还可以补一两句关键信息，系统会和语音一起保存。"
+              />
+            </view>
+          </view>
+
+          <view v-else class="composer-body">
+            <view class="notes-panel">
+              <text class="notes-panel__label">直接输入这一轮回答</text>
+              <textarea
+                v-model="textDraft"
+                class="notes-panel__input notes-panel__input--tall"
+                maxlength="800"
+                placeholder="直接输入这轮讲述内容。适合先写下关键事实、关系和情绪。"
+              />
+            </view>
+
+            <button
+              class="tb-primary-button text-submit-button"
+              :loading="sending"
+              :disabled="!sessionId || !textDraft.trim()"
+              @tap="handleManualSubmit"
+            >
+              提交文字记录
+            </button>
+          </view>
+
+          <text v-if="errorMessage" class="error-message">{{ errorMessage }}</text>
+
+          <view class="composer-footer">
+            <button
+              class="tb-ghost-button composer-footer__button"
+              :loading="skipping"
+              :disabled="!sessionId || sending || recordingStatus !== 'idle'"
+              @tap="handleSkip"
+            >
+              跳过这一问
+            </button>
+            <button
+              class="tb-primary-button composer-footer__button"
+              :loading="generating"
+              :disabled="!sessionId || !canGenerate || recordingStatus !== 'idle'"
+              @tap="goPreview"
+            >
+              生成书稿预览
+            </button>
+          </view>
         </view>
-
-        <view v-if="recordingStatus === 'paused'" class="lock-tip">
-          <text>录音已暂停，可以继续补充或直接结束本次讲述。</text>
-        </view>
       </view>
-
-      <view class="helper-card">
-        <text class="helper-title">长录音自动分段</text>
-        <text class="helper-text">连续讲述较长时，系统会优先按句子和语义边界切分为约 1 分钟的小音频，避免从一句话中间硬切开。</text>
-      </view>
-
-      <textarea
-        v-model="draftTranscript"
-        class="input"
-        maxlength="800"
-        placeholder="这里先输入本次讲述的文字稿或补充说明，后续可直接替换成真实语音转写。"
-      />
-
-      <text v-if="errorMessage" class="error">{{ errorMessage }}</text>
-
-      <view class="recording-actions">
-        <button
-          v-if="recordingStatus === 'idle'"
-          class="primary"
-          :disabled="!sessionId"
-          @tap="startRecording"
-        >
-          开始录音
-        </button>
-
-        <template v-else-if="recordingStatus === 'recording' || recordingStatus === 'locked'">
-          <button class="secondary" @tap="pauseRecording">暂停录音</button>
-          <button class="ghost" @tap="finishRecording">结束录音</button>
-        </template>
-
-        <template v-else>
-          <button class="secondary" @tap="resumeRecording">继续录音</button>
-          <button class="ghost" @tap="finishRecording">结束录音</button>
-        </template>
-      </view>
-
-      <view class="actions">
-        <button class="secondary" :loading="skipping" :disabled="!sessionId || sending || recordingStatus !== 'idle'" @tap="handleSkip">
-          跳过这一问
-        </button>
-        <button class="primary" :loading="sending" :disabled="!sessionId || !draftTranscript.trim() || recordingStatus !== 'idle'" @tap="handleManualSubmit">
-          提交文字记录
-        </button>
-      </view>
-      <button class="ghost preview-button" :loading="generating" :disabled="!sessionId || !canGenerate || recordingStatus !== 'idle'" @tap="goPreview">
-        生成书稿预览
-      </button>
-    </view>
+    </scroll-view>
   </view>
 </template>
 
@@ -175,15 +240,23 @@
 import { computed, ref } from 'vue';
 import { onLoad, onUnload } from '@dcloudio/uni-app';
 import { storeToRefs } from 'pinia';
-import type { RecordingMode, RecordingStatus, SessionAudioUploadRequest, SessionMessage } from '@talkbook/contracts';
+import type {
+  RecordingMode,
+  RecordingStatus,
+  SessionAudioUploadRequest,
+  SessionMessage
+} from '@talkbook/contracts';
 
 import { getSession, postAudioTranscript, postPreview, postSkipQuestion } from '../../services/api';
 import { useCreationStore } from '../../stores/useCreationStore';
 
 const store = useCreationStore();
-const { answerCount, canGenerate, currentQuestion, messages, selectedBookTypeLabel, sessionId } = storeToRefs(store);
-const draftTranscript = ref('');
-const activeView = ref<'audio' | 'text'>('audio');
+const { answerCount, canGenerate, currentQuestion, messages, selectedBookTypeLabel, sessionId } =
+  storeToRefs(store);
+
+const inputMode = ref<'audio' | 'text'>('audio');
+const audioNotes = ref('');
+const textDraft = ref('');
 const sending = ref(false);
 const skipping = ref(false);
 const generating = ref(false);
@@ -191,44 +264,30 @@ const errorMessage = ref('');
 const recordingStatus = ref<RecordingStatus>('idle');
 const recordingDuration = ref(0);
 const playingSegmentId = ref('');
+const activeSessionId = ref('');
 
 let recordingTimer: ReturnType<typeof setInterval> | null = null;
 let currentRecordingMode: RecordingMode = 'locked';
 
+const sessionShortId = computed(() => {
+  const id = activeSessionId.value || sessionId.value;
+  if (!id) {
+    return '--';
+  }
+
+  return id.length > 12 ? `${id.slice(0, 10)}...` : id;
+});
+
 const recordingStatusText = computed(() => {
   if (recordingStatus.value === 'recording' || recordingStatus.value === 'locked') {
-    return '已锁定录音';
+    return '录音中';
   }
 
   if (recordingStatus.value === 'paused') {
-    return '暂停录音';
+    return '已暂停';
   }
 
   return '待开始';
-});
-
-const recordingStatusTitle = computed(() => {
-  if (recordingStatus.value === 'recording' || recordingStatus.value === 'locked') {
-    return '正在录音（已锁定）';
-  }
-
-  if (recordingStatus.value === 'paused') {
-    return '录音已暂停';
-  }
-
-  return '准备开始一段新的讲述';
-});
-
-const recordingStatusDesc = computed(() => {
-  if (recordingStatus.value === 'recording' || recordingStatus.value === 'locked') {
-    return '点一下按钮即可开始录音，无需一直按住手机。';
-  }
-
-  if (recordingStatus.value === 'paused') {
-    return '可以继续补充，也可以直接结束并整理当前内容。';
-  }
-
-  return '建议先开始录音，再把这一轮讲述整理成书稿素材。';
 });
 
 function formatDuration(seconds: number) {
@@ -245,6 +304,17 @@ function formatMessageTime(createdAt: string) {
   return `${hours}:${minutes}`;
 }
 
+function buildSegmentMeta(message: SessionMessage) {
+  const segmentCount = message.segments?.length ?? 0;
+
+  if (segmentCount > 0) {
+    const totalDuration = message.segments?.reduce((sum, segment) => sum + segment.duration, 0) ?? 0;
+    return `${segmentCount} 段 · ${formatDuration(totalDuration)}`;
+  }
+
+  return `1 段 · ${formatDuration(message.duration || 12)}`;
+}
+
 function clearRecordingTicker() {
   if (recordingTimer) {
     clearInterval(recordingTimer);
@@ -259,27 +329,28 @@ function startRecordingTicker() {
   }, 1000);
 }
 
-async function syncSession() {
-  if (!sessionId.value) {
+async function syncSession(sessionIdToLoad = activeSessionId.value) {
+  if (!sessionIdToLoad) {
     uni.redirectTo({ url: '/pages/home/index' });
     return;
   }
 
   try {
-    const detail = await getSession(sessionId.value);
+    const detail = await getSession(sessionIdToLoad);
     if (detail.messages.length === 0) {
-      throw new Error('当前会话不存在，请重新创建。');
+      throw new Error('当前会话不存在，请重新开始创作。');
     }
 
     store.hydrateSession(detail);
+    activeSessionId.value = detail.sessionId;
     errorMessage.value = '';
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '获取会话失败。';
   }
 }
 
-async function submitTranscript(payload: SessionAudioUploadRequest) {
-  if (!sessionId.value) {
+async function submitTranscript(payload: SessionAudioUploadRequest, source: 'audio' | 'text') {
+  if (!activeSessionId.value) {
     return;
   }
 
@@ -287,11 +358,16 @@ async function submitTranscript(payload: SessionAudioUploadRequest) {
   errorMessage.value = '';
 
   try {
-    await postAudioTranscript(sessionId.value, payload);
-    draftTranscript.value = '';
+    await postAudioTranscript(activeSessionId.value, payload);
+    if (source === 'audio') {
+      audioNotes.value = '';
+    } else {
+      textDraft.value = '';
+      inputMode.value = 'audio';
+    }
     recordingDuration.value = 0;
     currentRecordingMode = 'press-hold';
-    await syncSession();
+    await syncSession(activeSessionId.value);
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '提交回答失败。';
   } finally {
@@ -300,14 +376,14 @@ async function submitTranscript(payload: SessionAudioUploadRequest) {
 }
 
 function startRecording() {
-  if (!sessionId.value || recordingStatus.value !== 'idle') {
+  if (!activeSessionId.value || recordingStatus.value !== 'idle') {
     return;
   }
 
-  errorMessage.value = '';
   currentRecordingMode = 'locked';
   recordingStatus.value = 'locked';
   recordingDuration.value = 0;
+  errorMessage.value = '';
   startRecordingTicker();
 }
 
@@ -331,39 +407,43 @@ function resumeRecording() {
 }
 
 async function finishRecording() {
-  if (recordingStatus.value === 'idle' || !sessionId.value) {
+  if (recordingStatus.value === 'idle' || !activeSessionId.value) {
     return;
   }
 
   clearRecordingTicker();
+
   const payload: SessionAudioUploadRequest = {
-    transcript: draftTranscript.value.trim(),
+    transcript: audioNotes.value.trim(),
     duration: recordingDuration.value || 12,
     format: 'mock-audio',
-    recordingMode: 'locked',
+    recordingMode: currentRecordingMode,
     isLocked: true
   };
 
   recordingStatus.value = 'idle';
-  await submitTranscript(payload);
+  await submitTranscript(payload, 'audio');
 }
 
 async function handleManualSubmit() {
-  if (!sessionId.value || !draftTranscript.value.trim()) {
+  if (!activeSessionId.value || !textDraft.value.trim()) {
     return;
   }
 
-  await submitTranscript({
-    transcript: draftTranscript.value.trim(),
-    duration: Math.max(12, Math.round(draftTranscript.value.trim().length * 1.6)),
-    format: 'mock-text',
-    recordingMode: 'locked',
-    isLocked: false
-  });
+  await submitTranscript(
+    {
+      transcript: textDraft.value.trim(),
+      duration: Math.max(12, Math.round(textDraft.value.trim().length * 1.6)),
+      format: 'mock-text',
+      recordingMode: 'locked',
+      isLocked: false
+    },
+    'text'
+  );
 }
 
 async function handleSkip() {
-  if (!sessionId.value) {
+  if (!activeSessionId.value) {
     return;
   }
 
@@ -371,8 +451,8 @@ async function handleSkip() {
   errorMessage.value = '';
 
   try {
-    await postSkipQuestion(sessionId.value);
-    await syncSession();
+    await postSkipQuestion(activeSessionId.value);
+    await syncSession(activeSessionId.value);
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '跳过问题失败。';
   } finally {
@@ -385,7 +465,7 @@ function togglePlayback(segmentId: string) {
 }
 
 async function goPreview() {
-  if (!sessionId.value || !canGenerate.value) {
+  if (!activeSessionId.value || !canGenerate.value) {
     return;
   }
 
@@ -393,9 +473,11 @@ async function goPreview() {
   errorMessage.value = '';
 
   try {
-    const preview = await postPreview(sessionId.value);
+    const preview = await postPreview(activeSessionId.value);
     store.setPreview(preview);
-    uni.navigateTo({ url: '/pages/preview/index' });
+    uni.navigateTo({
+      url: `/pages/preview/index?bookId=${preview.bookId}&sessionId=${activeSessionId.value}`
+    });
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '生成预览失败。';
   } finally {
@@ -403,13 +485,16 @@ async function goPreview() {
   }
 }
 
-onLoad(() => {
-  if (!sessionId.value) {
+onLoad((query) => {
+  activeSessionId.value =
+    typeof query?.sessionId === 'string' && query.sessionId ? query.sessionId : sessionId.value;
+
+  if (!activeSessionId.value) {
     uni.redirectTo({ url: '/pages/home/index' });
     return;
   }
 
-  syncSession();
+  syncSession(activeSessionId.value);
 });
 
 onUnload(() => {
@@ -418,343 +503,421 @@ onUnload(() => {
 </script>
 
 <style scoped>
-.page {
-  padding: 32rpx;
-  background: #f6f1e8;
+.interview-scroll {
+  height: 100vh;
 }
 
-.hero {
-  padding: 32rpx;
-  border-radius: 30rpx;
-  background: linear-gradient(135deg, #d8e6dc 0%, #edf3ee 45%, #f7efe2 100%);
-  color: #24352b;
-  margin-bottom: 24rpx;
+.interview-content {
+  padding-bottom: 48rpx;
 }
 
-.eyebrow {
+.section {
+  margin-top: 30rpx;
+}
+
+.context-row {
+  display: flex;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.question-card {
+  margin-top: 20rpx;
+  padding: 30rpx;
+  border-radius: 32rpx;
+  background: linear-gradient(180deg, #fff1ed 0%, #f8e4de 100%);
+}
+
+.question-card__eyebrow {
   display: block;
   font-size: 22rpx;
-  letter-spacing: 4rpx;
-  color: #5e6f65;
+  letter-spacing: 2rpx;
+  color: var(--tb-text-muted);
 }
 
-.title {
+.question-card__title {
   display: block;
-  margin-top: 12rpx;
-  font-size: 44rpx;
+  margin-top: 16rpx;
+  font-size: 40rpx;
+  line-height: 1.45;
   font-weight: 700;
+  color: var(--tb-text);
 }
 
-.subtitle {
+.question-card__tip {
   display: block;
-  margin-top: 14rpx;
-  font-size: 26rpx;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: var(--tb-text-muted);
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.section-head__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--tb-text);
+}
+
+.section-head__tip {
+  font-size: 22rpx;
   line-height: 1.6;
-  color: #5d665f;
+  color: var(--tb-text-muted);
+  text-align: right;
 }
 
-.panel {
-  background: #fffdf8;
+.timeline {
+  margin-top: 16rpx;
+}
+
+.message-card + .message-card {
+  margin-top: 22rpx;
+}
+
+.message-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.message-card__author {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--tb-text-muted);
+}
+
+.message-card__time {
+  font-size: 22rpx;
+  color: var(--tb-text-muted);
+}
+
+.assistant-bubble {
+  max-width: 92%;
+  padding: 22rpx 24rpx;
   border-radius: 28rpx;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 16rpx 32rpx rgba(40, 52, 45, 0.06);
+  background: var(--tb-surface-card);
 }
 
-.panel-header {
+.assistant-bubble__text {
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: var(--tb-text);
+}
+
+.response-card {
+  padding: 24rpx;
+  border-radius: 30rpx;
+  background: var(--tb-surface-card);
+}
+
+.response-card__block + .response-card__block {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx solid rgba(155, 63, 30, 0.08);
+}
+
+.response-card__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16rpx;
 }
 
-.label {
-  display: block;
-  color: #697167;
+.response-card__label {
   font-size: 24rpx;
+  font-weight: 700;
+  color: var(--tb-text);
 }
 
-.value,
-.question {
-  display: block;
-  margin-top: 12rpx;
-  font-size: 32rpx;
-  font-weight: 600;
-  line-height: 1.6;
-  color: #25342c;
-}
-
-.question {
-  font-size: 36rpx;
-}
-
-.tip {
-  display: block;
-  margin-top: 12rpx;
-  color: #697167;
-  font-size: 24rpx;
-}
-
-.view-switch {
-  display: flex;
-  background: #eef1eb;
-  border-radius: 999rpx;
-  padding: 6rpx;
-}
-
-.view-tab {
-  padding: 12rpx 24rpx;
-  border-radius: 999rpx;
-  color: #55635b;
-  font-size: 24rpx;
-}
-
-.view-tab.active {
-  background: #496257;
-  color: #fff;
-}
-
-.message-list {
-  margin-top: 18rpx;
-}
-
-.message-item {
-  margin-bottom: 18rpx;
-  padding: 20rpx;
-  border-radius: 24rpx;
-  background: #f5f2ea;
-}
-
-.message-item.user {
-  background: #eef4ef;
-}
-
-.message-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12rpx;
-}
-
-.message-role,
-.message-time,
-.segment-time {
+.response-card__meta {
   font-size: 22rpx;
-  color: #6f766f;
+  color: var(--tb-text-muted);
 }
 
-.message-content {
+.response-card__text {
   display: block;
-  margin-top: 10rpx;
-  font-size: 28rpx;
-  line-height: 1.7;
-  color: #24312a;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.75;
+  color: var(--tb-text);
 }
 
 .segment-list {
   margin-top: 12rpx;
 }
 
-.segment-card {
-  margin-top: 12rpx;
-  padding: 18rpx;
-  border-radius: 20rpx;
-  background: #fff;
+.segment-item {
+  padding: 20rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.76);
 }
 
-.segment-head {
+.segment-item + .segment-item {
+  margin-top: 12rpx;
+}
+
+.segment-item__head,
+.segment-item__player {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12rpx;
+  gap: 16rpx;
 }
 
-.segment-title {
-  font-size: 26rpx;
+.segment-item__title {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--tb-text);
+}
+
+.segment-item__duration {
+  font-size: 22rpx;
+  color: var(--tb-text-muted);
+}
+
+.segment-item__player {
+  margin-top: 14rpx;
+}
+
+.segment-item__button {
+  min-width: 104rpx;
+  min-height: 60rpx;
+  padding: 0 20rpx;
+  border-radius: var(--tb-radius-pill);
+  font-size: 24rpx;
   font-weight: 600;
-  color: #27352e;
+  background: #fff;
+  color: var(--tb-primary);
 }
 
-.segment-player {
-  display: flex;
-  align-items: center;
-  gap: 14rpx;
-  margin-top: 12rpx;
-}
-
-.play-button {
-  margin: 0;
-  min-width: 108rpx;
-  border-radius: 999rpx;
-  background: #496257;
-  color: #fff;
-  line-height: 1.8;
-}
-
-.wave-track {
+.segment-item__track {
   flex: 1;
   height: 12rpx;
   border-radius: 999rpx;
-  background: #e2e8df;
+  background: rgba(155, 63, 30, 0.12);
   overflow: hidden;
 }
 
-.wave-progress {
+.segment-item__progress {
   height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #496257 0%, #8ea89c 100%);
+  border-radius: 999rpx;
+  background: var(--tb-primary);
 }
 
-.segment-duration {
-  font-size: 22rpx;
-  color: #6f766f;
+.segment-item__text {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: var(--tb-text-muted);
 }
 
-.segment-transcript {
+.empty-card {
+  margin-top: 16rpx;
+  padding: 30rpx;
+  border-radius: 30rpx;
+  background: var(--tb-surface-low);
+}
+
+.empty-card__title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--tb-text);
+}
+
+.empty-card__text {
   display: block;
   margin-top: 12rpx;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: #4e5b53;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: var(--tb-text-muted);
 }
 
-.empty {
-  display: block;
-  margin-top: 16rpx;
-  color: #889187;
+.composer-card {
+  padding: 28rpx;
 }
 
-.status-pill {
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  font-size: 22rpx;
-  background: #eef1eb;
-  color: #506057;
-}
-
-.status-pill.recording,
-.status-pill.locked {
-  background: #dce8df;
-  color: #294239;
-}
-
-.status-pill.paused {
-  background: #f2e9d9;
-  color: #735429;
-}
-
-.recording-card,
-.helper-card {
-  margin-top: 18rpx;
-  padding: 22rpx;
-  border-radius: 24rpx;
-  background: #f5f2ea;
-}
-
-.status-row {
+.composer-card__head {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.composer-card__title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--tb-text);
+}
+
+.composer-card__desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.65;
+  color: var(--tb-text-muted);
+}
+
+.status-badge {
+  min-width: 112rpx;
+  min-height: 52rpx;
+  padding: 0 18rpx;
+  border-radius: var(--tb-radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.status-badge--idle {
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--tb-text-muted);
+}
+
+.status-badge--locked,
+.status-badge--recording {
+  background: rgba(186, 26, 26, 0.08);
+  color: var(--tb-danger);
+}
+
+.status-badge--paused {
+  background: rgba(255, 189, 167, 0.6);
+  color: var(--tb-secondary);
+}
+
+.mode-switch {
+  display: flex;
+  gap: 10rpx;
+  margin-top: 24rpx;
+  padding: 10rpx;
+  border-radius: var(--tb-radius-pill);
+  background: var(--tb-surface-low);
+}
+
+.mode-switch__item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72rpx;
+  border-radius: var(--tb-radius-pill);
+  font-size: 24rpx;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--tb-text-muted);
+  text-align: center;
+}
+
+.mode-switch__item--active {
+  background: var(--tb-secondary-soft);
+  color: var(--tb-secondary);
+}
+
+.composer-body {
+  margin-top: 22rpx;
+}
+
+.recorder-panel,
+.notes-panel {
+  padding: 22rpx 24rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.notes-panel {
+  margin-top: 16rpx;
+}
+
+.recorder-panel__timer {
+  display: flex;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16rpx;
 }
 
-.status-title {
-  display: block;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #24312a;
-}
-
-.status-desc,
-.helper-text,
-.lock-tip text,
-.lock-banner text {
-  display: block;
-  margin-top: 8rpx;
+.recorder-panel__label {
   font-size: 24rpx;
-  line-height: 1.6;
-  color: #5f675f;
+  color: var(--tb-text-muted);
 }
 
-.timer {
-  font-size: 34rpx;
+.recorder-panel__value {
+  font-size: 40rpx;
   font-weight: 700;
-  color: #24312a;
+  color: var(--tb-primary);
+  letter-spacing: 2rpx;
 }
 
-.lock-tip,
-.lock-banner {
-  margin-top: 18rpx;
-  padding: 18rpx;
-  border-radius: 20rpx;
-  background: #fff;
-}
-
-.lock-banner {
-  display: flex;
-  gap: 12rpx;
-}
-
-.lock-icon {
-  font-size: 28rpx;
-  line-height: 1.4;
-}
-
-.helper-title {
+.recorder-panel__hint {
   display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #24312a;
-}
-
-.input {
-  width: 100%;
-  min-height: 220rpx;
-  margin-top: 18rpx;
-  padding: 20rpx;
-  border-radius: 24rpx;
-  background: #fff;
-  box-sizing: border-box;
-}
-
-.error {
-  display: block;
-  margin-top: 16rpx;
-  color: #b42318;
+  margin-top: 14rpx;
   font-size: 24rpx;
+  line-height: 1.7;
+  color: var(--tb-text-muted);
 }
 
-.recording-actions,
-.actions {
+.recorder-panel__actions {
   display: flex;
   gap: 16rpx;
   margin-top: 18rpx;
 }
 
-.primary,
-.secondary,
-.ghost {
+.recorder-panel__button {
   flex: 1;
-  border-radius: 999rpx;
 }
 
-.primary {
-  background: #243d34;
-  color: #fff;
+.notes-panel__label {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--tb-text);
 }
 
-.secondary {
-  background: #ece4d7;
-  color: #243d34;
+.notes-panel__input {
+  width: 100%;
+  min-height: 170rpx;
+  margin-top: 14rpx;
+  padding: 24rpx;
+  border-radius: 22rpx;
+  background: #fff;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: var(--tb-text);
 }
 
-.ghost {
-  border: 2rpx solid #243d34;
-  background: transparent;
-  color: #243d34;
+.notes-panel__input--tall {
+  min-height: 240rpx;
 }
 
-.preview-button {
+.text-submit-button {
+  width: 100%;
   margin-top: 18rpx;
+}
+
+.error-message {
+  display: block;
+  margin-top: 18rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: var(--tb-danger);
+}
+
+.composer-footer {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+
+.composer-footer__button {
+  flex: 1;
 }
 </style>

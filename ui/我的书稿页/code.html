@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-dim": "#e9d6d0",
+              "secondary": "#845241",
+              "on-primary-container": "#fffbff",
+              "inverse-surface": "#392e2a",
+              "surface-tint": "#9e4220",
+              "outline-variant": "#ddc0b8",
+              "secondary-fixed": "#ffdbd0",
+              "surface-container-low": "#fff1ed",
+              "surface": "#fff8f6",
+              "tertiary-container": "#00818b",
+              "tertiary": "#00666e",
+              "on-secondary-fixed": "#341105",
+              "on-secondary-container": "#7a4a39",
+              "error": "#ba1a1a",
+              "inverse-primary": "#ffb59c",
+              "surface-container-high": "#f8e4de",
+              "on-primary-fixed-variant": "#7f2b09",
+              "on-tertiary": "#ffffff",
+              "on-primary": "#ffffff",
+              "on-tertiary-fixed": "#002023",
+              "surface-container-lowest": "#ffffff",
+              "error-container": "#ffdad6",
+              "outline": "#89726b",
+              "on-surface-variant": "#56423c",
+              "tertiary-fixed-dim": "#73d5e0",
+              "on-surface": "#231916",
+              "surface-container": "#fdeae4",
+              "surface-container-highest": "#f2ded9",
+              "primary": "#9b3f1e",
+              "on-primary-fixed": "#390c00",
+              "inverse-on-surface": "#ffede8",
+              "secondary-container": "#ffbda7",
+              "secondary-fixed-dim": "#f9b7a2",
+              "on-error-container": "#93000a",
+              "on-background": "#231916",
+              "tertiary-fixed": "#90f2fc",
+              "on-secondary-fixed-variant": "#683b2b",
+              "background": "#fff8f6",
+              "on-tertiary-fixed-variant": "#004f55",
+              "on-secondary": "#ffffff",
+              "on-tertiary-container": "#f5feff",
+              "surface-variant": "#f2ded9",
+              "primary-fixed-dim": "#ffb59c",
+              "primary-fixed": "#ffdbd0",
+              "surface-bright": "#fff8f6",
+              "primary-container": "#bb5733",
+              "on-error": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Public Sans"],
+              "body": ["Public Sans"],
+              "label": ["Public Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .active-pill .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-50 dark:bg-stone-950 flex items-center justify-between px-4 h-16 w-full tonal-shift no-border bg-transparent">
+<h1 class="text-[#9B3F1E] dark:text-[#FFBDA7] font-['Public_Sans'] text-xl font-semibold tracking-tight text-center flex-1">口书</h1>
+<div class="w-10 flex justify-end">
+<img alt="User Avatar" class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-Njg9nE87c_qx3aWApUP6TIXJqdhwd0FaHPdA7yshGrcKtov0lX26naNNSdiCL5dIlcI8owF_pKJMmRoNHJTkYscbrfkyIr6BC9QMoop-p_P4XsQ98DVAKzZX_UrU3K1EC7zBHJ3vFugo-8Mx6vp_dLJnYJvD4UoTWznKVT7WP8DFAaQXHjTrOLOsDONgk_0yiSY4iBjoJKNltCuW22YsU2CBPEkZbbTC3TditEY1ZQgNH0mCp55xZLG-cKD_4zo5vzJWoEwQlwf3"/>
+</div>
+</header>
+<main class="px-4 pt-4 space-y-6">
+<!-- Simplified Header Section -->
+<section class="px-1 py-4">
+<h2 class="text-primary font-headline text-[32px] leading-tight font-bold">我的书稿</h2>
+<p class="text-on-surface-variant font-body text-sm mt-1">回顾并继续您的创作旅程</p>
+</section>
+<!-- Drafts List -->
+<section class="space-y-4">
+<!-- Draft Item 1 -->
+<div class="bg-surface-container rounded-lg p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<h4 class="text-on-surface font-headline text-lg font-semibold">我的童年往事</h4>
+<div class="flex items-center gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-0.5 rounded-full text-xs font-medium">正在创作</span>
+<span class="text-on-surface-variant text-xs">更新于 2023-11-20</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 h-11 bg-primary text-on-primary rounded-full font-label font-semibold hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+                        继续编辑
+                    </button>
+<button class="px-4 h-11 bg-surface-container-highest text-primary rounded-full font-label font-semibold hover:bg-outline-variant/20 active:scale-95 transition-all">
+                        预览
+                    </button>
+</div>
+</div>
+<!-- Draft Item 2 -->
+<div class="bg-surface-container rounded-lg p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<h4 class="text-on-surface font-headline text-lg font-semibold">外公的菜园札记</h4>
+<div class="flex items-center gap-2">
+<span class="bg-surface-container-highest text-on-surface-variant px-3 py-0.5 rounded-full text-xs font-medium">已完成</span>
+<span class="text-on-surface-variant text-xs">更新于 2023-10-05</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 h-11 bg-secondary text-on-secondary rounded-full font-label font-semibold hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="visibility">visibility</span>
+                        查看作品
+                    </button>
+<button class="px-4 h-11 bg-surface-container-highest text-primary rounded-full font-label font-semibold hover:bg-outline-variant/20 active:scale-95 transition-all">
+                        重编
+                    </button>
+</div>
+</div>
+<!-- Draft Item 3 -->
+<div class="bg-surface-container rounded-lg p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<h4 class="text-on-surface font-headline text-lg font-semibold">给孙辈的一封信</h4>
+<div class="flex items-center gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-0.5 rounded-full text-xs font-medium">正在创作</span>
+<span class="text-on-surface-variant text-xs">更新于 2023-11-15</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 h-11 bg-primary text-on-primary rounded-full font-label font-semibold hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+                        继续编辑
+                    </button>
+<button class="px-4 h-11 bg-surface-container-highest text-primary rounded-full font-label font-semibold hover:bg-outline-variant/20 active:scale-95 transition-all">
+                        预览
+                    </button>
+</div>
+</div>
+</section>
+<!-- Secondary Actions List -->
+<section class="pt-4 space-y-1">
+<button class="w-full flex items-center justify-between px-1 py-4 hover:bg-surface-container-low transition-colors rounded-lg group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary" data-icon="loyalty">loyalty</span>
+<span class="text-on-surface font-body font-medium">会员权益</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between px-1 py-4 hover:bg-surface-container-low transition-colors rounded-lg group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary" data-icon="receipt_long">receipt_long</span>
+<span class="text-on-surface font-body font-medium">订单记录</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between px-1 py-4 hover:bg-surface-container-low transition-colors rounded-lg group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary" data-icon="gavel">gavel</span>
+<span class="text-on-surface font-body font-medium">版权与协议</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 h-20 bg-[#F8E4DE] dark:bg-stone-900 flex justify-around items-center px-6 pb-safe shadow-[0_-1px_3px_0_rgba(155,63,30,0.08)] no-border">
+<!-- Inactive Tab: 创作 -->
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 p-2 hover:bg-[#FDEAE4] transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="edit_note">edit_note</span>
+<span class="font-['Public_Sans'] text-xs font-medium">创作</span>
+</a>
+<!-- Active Tab: 我的书稿 -->
+<a class="flex flex-col items-center justify-center bg-[#FFBDA7] dark:bg-[#7A4A39] text-[#7A4A39] dark:text-[#FFBDA7] rounded-full px-5 py-1 active-pill active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="book_5" data-weight="fill" style="font-variation-settings: 'FILL' 1;">book_5</span>
+<span class="font-['Public_Sans'] text-xs font-bold">我的书稿</span>
+</a>
+</nav>
+</body></html>

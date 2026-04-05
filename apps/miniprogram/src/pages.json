@@ -18,7 +18,7 @@
     },
     {
       "path": "pages/profile/index",
-      "style": { "navigationBarTitleText": "我的" }
+      "style": { "navigationBarTitleText": "我的书稿" }
     },
     {
       "path": "pages/login/index",

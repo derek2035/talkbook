@@ -21,6 +21,19 @@ export interface SessionCreateRequest {
   bookType: BookType;
 }
 
+export interface WeChatLoginRequest {
+  code: string;
+}
+
+export interface WeChatLoginResponse {
+  userId: string;
+  openId: string;
+  nickname: string;
+  avatarUrl: string;
+  token: string;
+  loginMode?: 'wechat' | 'mock';
+}
+
 export interface SessionCreateResponse {
   sessionId: string;
   bookType: BookType;

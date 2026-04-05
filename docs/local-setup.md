@@ -84,6 +84,47 @@ pnpm typecheck
 pnpm build:server
 ```
 
+## 本地环境变量
+
+当前项目已经支持通过环境变量配置小程序请求地址和服务端端口，避免把联调地址写死在代码里。
+
+### 小程序端
+
+在 `apps/miniprogram` 下创建 `.env` 文件，可参考：
+
+[`apps/miniprogram/.env.example`](/Users/derek/code/talkbook/apps/miniprogram/.env.example)
+
+```bash
+cp apps/miniprogram/.env.example apps/miniprogram/.env
+```
+
+默认配置：
+
+```bash
+VITE_API_BASE_URL=http://localhost:3000/api/v1
+```
+
+如果后续要做真机联调，把这个值替换成手机可访问的测试域名即可。
+
+### 服务端
+
+在 `apps/server` 下创建 `.env` 文件，可参考：
+
+[`apps/server/.env.example`](/Users/derek/code/talkbook/apps/server/.env.example)
+
+```bash
+cp apps/server/.env.example apps/server/.env
+```
+
+常用字段：
+
+- `PORT`：服务端监听端口
+- `AI_PROVIDER`：后续真实模型接入时使用
+- `ASR_PROVIDER`：后续真实语音识别接入时使用
+- `WECHAT_APP_ID`：服务端换取微信用户身份时使用
+- `WECHAT_APP_SECRET`：服务端换取微信用户身份时使用
+- `ALLOW_MOCK_WECHAT_LOGIN`：本地未配置微信密钥时，是否允许自动回退到开发登录
+
 ## 如果已经放错目录怎么办
 
 ### 情况 1：只是克隆到了 `vennix-website/talkbook`

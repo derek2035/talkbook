@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 
 import { env } from './config/env.js';
+import { wechatLoginHandler } from './routes/auth.js';
 import { getBookHandler, getMyBooksHandler } from './routes/books.js';
 import { bookTypesHandler } from './routes/book-types.js';
 import { healthHandler } from './routes/health.js';
@@ -19,6 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/health', healthHandler);
+app.post('/api/v1/auth/wechat/login', wechatLoginHandler);
 app.get('/api/v1/book-types', bookTypesHandler);
 app.post('/api/v1/sessions', createSessionHandler);
 app.get('/api/v1/sessions/:sessionId', getSessionHandler);

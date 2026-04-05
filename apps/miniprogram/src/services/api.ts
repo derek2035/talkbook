@@ -7,10 +7,21 @@ import type {
   SessionAudioUploadRequest,
   SessionCreateResponse,
   SessionDetailResponse,
-  SkipQuestionResponse
+  SkipQuestionResponse,
+  WeChatLoginRequest,
+  WeChatLoginResponse
 } from '@talkbook/contracts';
 
-const BASE_URL = 'http://localhost:3000/api/v1';
+import { loadUserSession } from '../utils/auth-storage';
+
+const DEFAULT_BASE_URL = 'http://localhost:3000/api/v1';
+
+function resolveBaseUrl() {
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_BASE_URL;
+  return configured.replace(/\/+$/, '');
+}
+
+export const API_BASE_URL = resolveBaseUrl();
 
 interface RequestOptions {
   path: string;
@@ -22,12 +33,25 @@ interface ErrorPayload {
   error?: string;
 }
 
+function buildHeaders() {
+  const session = loadUserSession();
+
+  if (!session?.token) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${session.token}`
+  };
+}
+
 function request<T>({ path, method = 'GET', data }: RequestOptions): Promise<T> {
   return new Promise((resolve, reject) => {
     uni.request({
-      url: `${BASE_URL}${path}`,
+      url: `${API_BASE_URL}${path}`,
       method,
       data,
+      header: buildHeaders(),
       success: (result) => {
         const statusCode = result.statusCode ?? 500;
 
@@ -41,6 +65,14 @@ function request<T>({ path, method = 'GET', data }: RequestOptions): Promise<T> 
       },
       fail: (error) => reject(error)
     });
+  });
+}
+
+export function postWeChatLogin(payload: WeChatLoginRequest) {
+  return request<WeChatLoginResponse>({
+    path: '/auth/wechat/login',
+    method: 'POST',
+    data: payload as unknown as Record<string, unknown>
   });
 }
 

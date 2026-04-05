@@ -1,8 +1,20 @@
 <template>
   <view class="tb-page tb-safe-bottom">
-    <PageHeader title="我的书稿" />
-
     <view class="tb-content">
+      <view class="account-card">
+        <view v-if="userProfile?.avatarUrl" class="account-card__avatar">
+          <image class="account-card__avatar-image" :src="userProfile.avatarUrl" mode="aspectFill" />
+        </view>
+        <view v-else class="account-card__avatar account-card__avatar--fallback">
+          <text class="account-card__avatar-text">{{ userProfile?.avatarText || '我' }}</text>
+        </view>
+
+        <view class="account-card__body">
+          <text class="account-card__name">{{ userProfile?.nickname || '微信用户' }}</text>
+          <text class="account-card__meta">已使用微信身份登录</text>
+        </view>
+      </view>
+
       <view class="hero-card">
         <text class="hero-card__title">你的书稿都在这里</text>
         <text class="hero-card__desc">预览、继续创作、回看章节，都会从这个页面继续。</text>
@@ -66,17 +78,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import type { BookStatus, MyBookItem } from '@talkbook/contracts';
 
 import BottomNav from '../../components/BottomNav.vue';
-import PageHeader from '../../components/PageHeader.vue';
 import { getMyBooks } from '../../services/api';
 import { useAppStore } from '../../stores/useAppStore';
 
 const appStore = useAppStore();
 const books = ref<MyBookItem[]>([]);
+const userProfile = computed(() => appStore.userProfile);
 
 function formatStatus(status: BookStatus) {
   if (status === 'preview') {
@@ -147,6 +159,61 @@ onShow(() => {
 </script>
 
 <style scoped>
+.account-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+  padding: 24rpx 26rpx;
+  border-radius: 30rpx;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.account-card__avatar {
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 999rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f6ddd4;
+}
+
+.account-card__avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.account-card__avatar-image {
+  width: 100%;
+  height: 100%;
+}
+
+.account-card__avatar-text {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: var(--tb-primary);
+}
+
+.account-card__body {
+  min-width: 0;
+}
+
+.account-card__name {
+  display: block;
+  font-size: 34rpx;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--tb-text);
+}
+
+.account-card__meta {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: var(--tb-text-muted);
+}
+
 .hero-card {
   padding: 34rpx 30rpx;
   border-radius: 36rpx;
@@ -170,14 +237,15 @@ onShow(() => {
 
 .hero-card__meta {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 18rpx;
+  gap: 24rpx;
   margin-top: 24rpx;
 }
 
 .hero-card__stat {
   flex: 1;
+  min-width: 0;
 }
 
 .hero-card__stat-label {
@@ -195,13 +263,18 @@ onShow(() => {
 }
 
 .hero-card__new {
-  min-width: 196rpx;
-  min-height: 80rpx;
-  padding: 0 24rpx;
+  flex-shrink: 0;
+  min-width: 220rpx;
+  min-height: 88rpx;
+  padding: 0 32rpx;
   border-radius: var(--tb-radius-pill);
   background: var(--tb-primary);
   color: #fff;
-  font-size: 26rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;
+  font-size: 28rpx;
   font-weight: 600;
 }
 

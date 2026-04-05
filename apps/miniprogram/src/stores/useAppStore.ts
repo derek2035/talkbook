@@ -1,56 +1,32 @@
 import { defineStore } from 'pinia';
+import type { WeChatLoginResponse } from '@talkbook/contracts';
 
-interface MockUserProfile {
-  nickname: string;
-  avatarText: string;
-}
-
-const STORAGE_KEY = 'talkbook_mock_user';
-
-function loadProfile(): MockUserProfile | null {
-  try {
-    const value = uni.getStorageSync(STORAGE_KEY);
-    if (!value) {
-      return null;
-    }
-
-    return value as MockUserProfile;
-  } catch {
-    return null;
-  }
-}
-
-function saveProfile(profile: MockUserProfile | null) {
-  try {
-    if (profile) {
-      uni.setStorageSync(STORAGE_KEY, profile);
-      return;
-    }
-
-    uni.removeStorageSync(STORAGE_KEY);
-  } catch {
-    // ignore storage errors in mock mode
-  }
-}
+import {
+  buildAvatarText,
+  loadUserSession,
+  saveUserSession,
+  type UserSession
+} from '../utils/auth-storage';
 
 export const useAppStore = defineStore('app', {
   state: () => ({
-    userProfile: loadProfile() as MockUserProfile | null
+    userProfile: loadUserSession() as UserSession | null
   }),
   getters: {
-    isLoggedIn: (state) => Boolean(state.userProfile)
+    isLoggedIn: (state) => Boolean(state.userProfile?.token),
+    authToken: (state) => state.userProfile?.token ?? ''
   },
   actions: {
-    mockLogin() {
+    setLoginSession(payload: WeChatLoginResponse) {
       this.userProfile = {
-        nickname: '讲述者',
-        avatarText: '讲'
+        ...payload,
+        avatarText: buildAvatarText(payload.nickname)
       };
-      saveProfile(this.userProfile);
+      saveUserSession(this.userProfile);
     },
     logout() {
       this.userProfile = null;
-      saveProfile(null);
+      saveUserSession(null);
     }
   }
 });

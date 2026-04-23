@@ -1,5 +1,7 @@
 <template>
   <view class="tb-page">
+    <PageHeader title="智能访谈" back @back="goBack" />
+
     <scroll-view scroll-y class="interview-scroll">
       <view class="tb-content interview-content">
         <view class="context-row">
@@ -24,8 +26,29 @@
 
         <view class="section">
           <view class="section-head">
-            <text class="section-head__title">采访记录</text>
-            <text class="section-head__tip">语音和文字会一起保留，方便回听和整理</text>
+            <view>
+              <text class="section-head__title">采访记录</text>
+              <text class="section-head__tip">
+                {{ timelineViewMode === 'audio' ? '回听录音分段，按时间回看每轮讲述。' : '阅读整理后的文字记录，快速确认关键信息。' }}
+              </text>
+            </view>
+
+            <view class="timeline-switch">
+              <button
+                class="timeline-switch__item"
+                :class="{ 'timeline-switch__item--active': timelineViewMode === 'audio' }"
+                @tap="timelineViewMode = 'audio'"
+              >
+                语音播放
+              </button>
+              <button
+                class="timeline-switch__item"
+                :class="{ 'timeline-switch__item--active': timelineViewMode === 'text' }"
+                @tap="timelineViewMode = 'text'"
+              >
+                文字记录
+              </button>
+            </view>
           </view>
 
           <view v-if="messages.length" class="timeline">
@@ -47,7 +70,7 @@
               </view>
 
               <view v-else class="response-card">
-                <view class="response-card__block">
+                <view v-if="timelineViewMode === 'text'" class="response-card__block">
                   <view class="response-card__head">
                     <text class="response-card__label">文字记录</text>
                     <text class="response-card__meta">{{ message.statusLabel || '已保存' }}</text>
@@ -55,7 +78,7 @@
                   <text class="response-card__text">{{ message.transcript || message.content }}</text>
                 </view>
 
-                <view class="response-card__block">
+                <view v-else class="response-card__block">
                   <view class="response-card__head">
                     <text class="response-card__label">语音分段</text>
                     <text class="response-card__meta">{{ buildSegmentMeta(message) }}</text>
@@ -247,6 +270,7 @@ import type {
   SessionMessage
 } from '@talkbook/contracts';
 
+import PageHeader from '../../components/PageHeader.vue';
 import { getSession, postAudioTranscript, postPreview, postSkipQuestion } from '../../services/api';
 import { useCreationStore } from '../../stores/useCreationStore';
 
@@ -265,9 +289,11 @@ const recordingStatus = ref<RecordingStatus>('idle');
 const recordingDuration = ref(0);
 const playingSegmentId = ref('');
 const activeSessionId = ref('');
+const timelineViewMode = ref<'audio' | 'text'>('audio');
 
 let recordingTimer: ReturnType<typeof setInterval> | null = null;
 let currentRecordingMode: RecordingMode = 'locked';
+const recorderManager = typeof uni.getRecorderManager === 'function' ? uni.getRecorderManager() : null;
 
 const sessionShortId = computed(() => {
   const id = activeSessionId.value || sessionId.value;
@@ -315,11 +341,101 @@ function buildSegmentMeta(message: SessionMessage) {
   return `1 段 · ${formatDuration(message.duration || 12)}`;
 }
 
+function goBack() {
+  const pageCount = getCurrentPages().length;
+
+  if (pageCount > 1) {
+    uni.navigateBack();
+    return;
+  }
+
+  uni.reLaunch({ url: '/pages/home/index' });
+}
+
 function clearRecordingTicker() {
   if (recordingTimer) {
     clearInterval(recordingTimer);
     recordingTimer = null;
   }
+}
+
+function getFileSystemManagerCompat() {
+  return (
+    (uni as typeof uni & { getFileSystemManager?: () => { readFile: (options: Record<string, unknown>) => void } })
+      .getFileSystemManager?.() ||
+    (globalThis as { wx?: { getFileSystemManager?: () => { readFile: (options: Record<string, unknown>) => void } } }).wx
+      ?.getFileSystemManager?.() ||
+    null
+  );
+}
+
+function readFileAsBase64(filePath: string) {
+  const fileSystemManager = getFileSystemManagerCompat();
+
+  if (!fileSystemManager) {
+    return Promise.reject(new Error('当前环境暂不支持读取录音文件。'));
+  }
+
+  return new Promise<string>((resolve, reject) => {
+    fileSystemManager.readFile({
+      filePath,
+      encoding: 'base64',
+      success: (result: { data?: string }) => resolve(result.data || ''),
+      fail: (error: unknown) => reject(error)
+    });
+  });
+}
+
+function stopRealRecording() {
+  if (!recorderManager) {
+    return Promise.resolve<{
+      audioBase64: string;
+      duration: number;
+      audioFileName: string;
+      audioMimeType: string;
+    } | null>(null);
+  }
+
+  return new Promise<{
+    audioBase64: string;
+    duration: number;
+    audioFileName: string;
+    audioMimeType: string;
+  }>((resolve, reject) => {
+    const cleanup = () => {
+      recorderManager.offStop?.(handleStop);
+      recorderManager.offError?.(handleError);
+    };
+
+    const handleError = (error: unknown) => {
+      cleanup();
+      reject(error);
+    };
+
+    const handleStop = async (result: { tempFilePath?: string; duration?: number }) => {
+      cleanup();
+
+      try {
+        if (!result.tempFilePath) {
+          throw new Error('录音文件不存在');
+        }
+
+        const audioBase64 = await readFileAsBase64(result.tempFilePath);
+        resolve({
+          audioBase64,
+          duration: Math.max(1, Math.round((result.duration || recordingDuration.value * 1000) / 1000)),
+          audioFileName: 'talkbook-recording.mp3',
+          audioMimeType: 'audio/mpeg'
+        });
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    recorderManager.onStop?.(handleStop);
+    recorderManager.onError?.(handleError);
+    recorderManager.stop();
+  });
 }
 
 function startRecordingTicker() {
@@ -384,6 +500,23 @@ function startRecording() {
   recordingStatus.value = 'locked';
   recordingDuration.value = 0;
   errorMessage.value = '';
+
+  if (recorderManager) {
+    try {
+      recorderManager.start({
+        duration: 10 * 60 * 1000,
+        format: 'mp3',
+        sampleRate: 16000,
+        numberOfChannels: 1,
+        encodeBitRate: 96000
+      });
+    } catch (error) {
+      recordingStatus.value = 'idle';
+      errorMessage.value = error instanceof Error ? error.message : '开始录音失败。';
+      return;
+    }
+  }
+
   startRecordingTicker();
 }
 
@@ -394,6 +527,7 @@ function pauseRecording() {
 
   recordingStatus.value = 'paused';
   clearRecordingTicker();
+  recorderManager?.pause?.();
 }
 
 function resumeRecording() {
@@ -403,6 +537,7 @@ function resumeRecording() {
 
   currentRecordingMode = 'locked';
   recordingStatus.value = 'locked';
+  recorderManager?.resume?.();
   startRecordingTicker();
 }
 
@@ -413,10 +548,30 @@ async function finishRecording() {
 
   clearRecordingTicker();
 
+  let recordedAudio: {
+    audioBase64: string;
+    duration: number;
+    audioFileName: string;
+    audioMimeType: string;
+  } | null = null;
+
+  if (recorderManager) {
+    try {
+      recordedAudio = await stopRealRecording();
+    } catch (error) {
+      recordingStatus.value = 'idle';
+      errorMessage.value = error instanceof Error ? error.message : '结束录音失败。';
+      return;
+    }
+  }
+
   const payload: SessionAudioUploadRequest = {
-    transcript: audioNotes.value.trim(),
-    duration: recordingDuration.value || 12,
-    format: 'mock-audio',
+    transcript: audioNotes.value.trim() || undefined,
+    audioBase64: recordedAudio?.audioBase64,
+    audioMimeType: recordedAudio?.audioMimeType,
+    audioFileName: recordedAudio?.audioFileName,
+    duration: recordedAudio?.duration || recordingDuration.value || 12,
+    format: recordedAudio ? 'audio/mp3' : 'mock-audio',
     recordingMode: currentRecordingMode,
     isLocked: true
   };
@@ -504,10 +659,11 @@ onUnload(() => {
 
 <style scoped>
 .interview-scroll {
-  height: 100vh;
+  height: calc(100vh - 112rpx);
 }
 
 .interview-content {
+  padding-top: 18rpx;
   padding-bottom: 48rpx;
 }
 
@@ -554,7 +710,7 @@ onUnload(() => {
 
 .section-head {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 18rpx;
 }
@@ -566,10 +722,34 @@ onUnload(() => {
 }
 
 .section-head__tip {
+  display: block;
+  margin-top: 8rpx;
   font-size: 22rpx;
   line-height: 1.6;
   color: var(--tb-text-muted);
-  text-align: right;
+}
+
+.timeline-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.timeline-switch__item {
+  min-height: 56rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--tb-text-muted);
+}
+
+.timeline-switch__item--active {
+  background: var(--tb-secondary-soft);
+  color: var(--tb-secondary);
 }
 
 .timeline {

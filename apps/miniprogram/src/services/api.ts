@@ -12,7 +12,7 @@ import type {
   WeChatLoginResponse
 } from '@talkbook/contracts';
 
-import { loadUserSession } from '../utils/auth-storage';
+import { loadUserSession, saveUserSession } from '../utils/auth-storage';
 
 const DEFAULT_BASE_URL = 'http://localhost:3000/api/v1';
 
@@ -60,8 +60,16 @@ function request<T>({ path, method = 'GET', data }: RequestOptions): Promise<T> 
           return;
         }
 
+        if (statusCode === 401) {
+          saveUserSession(null);
+        }
+
         const payload = (result.data ?? {}) as ErrorPayload;
-        reject(new Error(payload.error ?? `Request failed with status ${statusCode}`));
+        reject(
+          new Error(
+            statusCode === 401 ? payload.error ?? '登录状态已失效，请重新登录' : payload.error ?? `Request failed with status ${statusCode}`
+          )
+        );
       },
       fail: (error) => reject(error)
     });

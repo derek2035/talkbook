@@ -2,27 +2,35 @@
   "pages": [
     {
       "path": "pages/home/index",
-      "style": { "navigationBarTitleText": "口书" }
+      "style": { "navigationBarTitleText": "口书", "navigationStyle": "custom" }
     },
     {
       "path": "pages/interview/index",
-      "style": { "navigationBarTitleText": "AI 采访" }
+      "style": { "navigationBarTitleText": "AI 采访", "navigationStyle": "custom" }
     },
     {
       "path": "pages/preview/index",
-      "style": { "navigationBarTitleText": "书稿预览" }
+      "style": { "navigationBarTitleText": "书稿预览", "navigationStyle": "custom" }
     },
     {
       "path": "pages/chapter/index",
-      "style": { "navigationBarTitleText": "章节预览" }
+      "style": { "navigationBarTitleText": "章节预览", "navigationStyle": "custom" }
     },
     {
       "path": "pages/profile/index",
-      "style": { "navigationBarTitleText": "我的书稿" }
+      "style": { "navigationBarTitleText": "我的书稿", "navigationStyle": "custom" }
     },
     {
       "path": "pages/login/index",
-      "style": { "navigationBarTitleText": "微信登录" }
+      "style": { "navigationBarTitleText": "微信登录", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/privacy/index",
+      "style": { "navigationBarTitleText": "隐私政策", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/terms/index",
+      "style": { "navigationBarTitleText": "用户协议", "navigationStyle": "custom" }
     }
   ]
 }

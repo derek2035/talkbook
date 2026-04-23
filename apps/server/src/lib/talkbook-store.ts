@@ -14,23 +14,34 @@ import {
   type SessionStatus
 } from '@talkbook/contracts';
 
-interface SessionRecord {
+import { database, runInTransaction } from './database.js';
+import { generateFollowupQuestion, generatePreviewDraft } from './ai-service.js';
+import { getAsrMode, transcribeAudio } from './asr-service.js';
+import { assertSafeUserContent } from './content-safety.js';
+
+interface UserRecord {
   id: string;
-  bookType: BookType;
-  status: SessionStatus;
-  messages: SessionMessage[];
-  answerCount: number;
-  skippedCount: number;
-  currentQuestionIndex: number;
-  bookId?: string;
+  openId: string;
+  nickname: string;
+  avatarUrl: string;
+  membershipStatus: string;
   createdAt: string;
   updatedAt: string;
 }
 
-interface BookRecord extends BookDetailResponse {}
-
-const sessions = new Map<string, SessionRecord>();
-const books = new Map<string, BookRecord>();
+interface SessionRecord {
+  id: string;
+  userId: string;
+  bookType: BookType;
+  status: SessionStatus;
+  answerCount: number;
+  skippedCount: number;
+  currentQuestionIndex: number;
+  currentQuestion: string;
+  bookId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 const readyPrompt = '素材已经达到预览标准，你可以先生成书稿预览，也可以继续补充更多细节。';
 
@@ -93,6 +104,103 @@ function createMessage(
   };
 }
 
+function parseJson<T>(value: string | null | undefined, fallback: T) {
+  if (!value) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function mapUser(row: Record<string, unknown> | null | undefined): UserRecord | null {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: String(row.id),
+    openId: String(row.open_id),
+    nickname: String(row.nickname),
+    avatarUrl: String(row.avatar_url),
+    membershipStatus: String(row.membership_status),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapSession(row: Record<string, unknown> | null | undefined): SessionRecord | null {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: String(row.id),
+    userId: String(row.user_id),
+    bookType: row.book_type as BookType,
+    status: row.status as SessionStatus,
+    answerCount: Number(row.answer_count),
+    skippedCount: Number(row.skipped_count),
+    currentQuestionIndex: Number(row.current_question_index),
+    currentQuestion: String(row.current_question),
+    bookId: row.book_id ? String(row.book_id) : null,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapMessage(row: Record<string, unknown>): SessionMessage {
+  return {
+    id: String(row.id),
+    role: row.role as SessionMessage['role'],
+    content: String(row.content),
+    createdAt: String(row.created_at),
+    displayType: row.display_type ? (String(row.display_type) as SessionMessage['displayType']) : undefined,
+    transcript: row.transcript ? String(row.transcript) : undefined,
+    duration: row.duration === null || row.duration === undefined ? undefined : Number(row.duration),
+    timeLabel: row.time_label ? String(row.time_label) : undefined,
+    recordingMode: row.recording_mode
+      ? (String(row.recording_mode) as SessionMessage['recordingMode'])
+      : undefined,
+    statusLabel: row.status_label ? String(row.status_label) : undefined,
+    segments: parseJson<SessionAudioSegment[]>(row.segments_json ? String(row.segments_json) : '', [])
+  };
+}
+
+function loadSession(sessionId: string, userId: string) {
+  const row = database
+    .prepare(
+      `
+        SELECT id, user_id, book_type, status, answer_count, skipped_count,
+               current_question_index, current_question, book_id, created_at, updated_at
+        FROM sessions
+        WHERE id = ? AND user_id = ?
+      `
+    )
+    .get(sessionId, userId) as Record<string, unknown> | undefined;
+
+  return mapSession(row ?? null);
+}
+
+function loadMessages(sessionId: string) {
+  const rows = database
+    .prepare(
+      `
+        SELECT id, role, content, created_at, display_type, transcript, duration, time_label,
+               recording_mode, status_label, segments_json
+        FROM messages
+        WHERE session_id = ?
+        ORDER BY created_at ASC, rowid ASC
+      `
+    )
+    .all(sessionId) as Array<Record<string, unknown>>;
+
+  return rows.map((row) => mapMessage(row));
+}
+
 function isBookType(value: string | undefined): value is BookType {
   return BOOK_TYPES.some((item) => item.key === value);
 }
@@ -106,25 +214,20 @@ function getNextQuestion(session: SessionRecord) {
   const nextIndex = session.currentQuestionIndex + 1;
 
   if (nextIndex >= questions.length) {
-    return readyPrompt;
+    return {
+      nextQuestion: readyPrompt,
+      nextQuestionIndex: session.currentQuestionIndex
+    };
   }
 
-  session.currentQuestionIndex = nextIndex;
-  return questions[nextIndex];
+  return {
+    nextQuestion: questions[nextIndex],
+    nextQuestionIndex: nextIndex
+  };
 }
 
 function canGeneratePreview(session: SessionRecord) {
   return session.answerCount >= 2;
-}
-
-function updateSessionStatus(session: SessionRecord) {
-  session.status = canGeneratePreview(session) ? 'preview-ready' : 'collecting';
-  session.updatedAt = nowIso();
-}
-
-function getCurrentQuestion(session: SessionRecord) {
-  const latestAssistantMessage = [...session.messages].reverse().find((message) => message.role === 'assistant');
-  return latestAssistantMessage?.content ?? '';
 }
 
 function buildFallbackTranscript(session: SessionRecord) {
@@ -270,135 +373,346 @@ function toSessionDetail(session: SessionRecord): SessionDetailResponse {
     sessionId: session.id,
     bookType: session.bookType,
     status: session.status,
-    currentQuestion: getCurrentQuestion(session),
-    messages: session.messages,
+    currentQuestion: session.currentQuestion,
+    messages: loadMessages(session.id),
     canGenerate: canGeneratePreview(session),
     answerCount: session.answerCount
   };
 }
 
-export function createSession(bookType: string | undefined) {
-  const normalizedBookType = isBookType(bookType) ? bookType : BOOK_TYPES[0].key;
-  const firstQuestion = getQuestions(normalizedBookType)[0];
-  const session: SessionRecord = {
-    id: makeId('sess'),
-    bookType: normalizedBookType,
-    status: 'collecting',
-    messages: [createMessage('assistant', firstQuestion)],
-    answerCount: 0,
-    skippedCount: 0,
-    currentQuestionIndex: 0,
-    createdAt: nowIso(),
-    updatedAt: nowIso()
-  };
+async function resolveTranscript(session: SessionRecord, payload: SessionAudioUploadRequest | undefined) {
+  const manualTranscript = payload?.transcript?.trim();
 
-  sessions.set(session.id, session);
+  if (manualTranscript) {
+    return {
+      transcript: manualTranscript,
+      statusLabel: payload?.format === 'mock-text' ? '文字录入' : payload?.isLocked ? '锁定录音' : '按住录音'
+    };
+  }
+
+  if (payload?.audioBase64 && getAsrMode() === 'real') {
+    const transcript = await transcribeAudio({
+      audioBase64: payload.audioBase64,
+      audioMimeType: payload.audioMimeType,
+      audioFileName: payload.audioFileName
+    });
+
+    return {
+      transcript,
+      statusLabel: '实时转写'
+    };
+  }
 
   return {
-    sessionId: session.id,
-    bookType: session.bookType,
+    transcript: buildFallbackTranscript(session),
+    statusLabel: payload?.isLocked ? '锁定录音' : '按住录音'
+  };
+}
+
+export function upsertUser(payload: { userId: string; openId: string; nickname: string; avatarUrl: string }) {
+  const timestamp = nowIso();
+
+  runInTransaction(() => {
+    database
+      .prepare(
+        `
+          INSERT INTO users (id, open_id, nickname, avatar_url, membership_status, created_at, updated_at)
+          VALUES (?, ?, ?, ?, 'standard', ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            open_id = excluded.open_id,
+            nickname = excluded.nickname,
+            avatar_url = excluded.avatar_url,
+            updated_at = excluded.updated_at
+        `
+      )
+      .run(payload.userId, payload.openId, payload.nickname, payload.avatarUrl, timestamp, timestamp);
+  });
+}
+
+export function getUserById(userId: string) {
+  const row = database
+    .prepare(
+      `
+        SELECT id, open_id, nickname, avatar_url, membership_status, created_at, updated_at
+        FROM users
+        WHERE id = ?
+      `
+    )
+    .get(userId) as Record<string, unknown> | undefined;
+
+  return mapUser(row ?? null);
+}
+
+export function createSession(userId: string, bookType: string | undefined) {
+  const normalizedBookType = isBookType(bookType) ? bookType : BOOK_TYPES[0].key;
+  const firstQuestion = getQuestions(normalizedBookType)[0];
+  const sessionId = makeId('sess');
+  const createdAt = nowIso();
+  const firstMessage = createMessage('assistant', firstQuestion, {
+    createdAt
+  });
+
+  runInTransaction(() => {
+    database
+      .prepare(
+        `
+          INSERT INTO sessions (
+            id, user_id, book_type, status, answer_count, skipped_count,
+            current_question_index, current_question, book_id, created_at, updated_at
+          )
+          VALUES (?, ?, ?, 'collecting', 0, 0, 0, ?, NULL, ?, ?)
+        `
+      )
+      .run(sessionId, userId, normalizedBookType, firstQuestion, createdAt, createdAt);
+
+    database
+      .prepare(
+        `
+          INSERT INTO messages (
+            id, session_id, role, content, created_at, display_type, transcript, duration,
+            time_label, recording_mode, status_label, segments_json
+          )
+          VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, ?, NULL, NULL, NULL)
+        `
+      )
+      .run(
+        firstMessage.id,
+        sessionId,
+        firstMessage.role,
+        firstMessage.content,
+        firstMessage.createdAt,
+        firstMessage.timeLabel ?? null
+      );
+  });
+
+  return {
+    sessionId,
+    bookType: normalizedBookType,
     firstQuestion
   };
 }
 
-export function getSession(sessionId: string) {
-  const session = sessions.get(sessionId);
+export function getSession(sessionId: string, userId: string) {
+  const session = loadSession(sessionId, userId);
   return session ? toSessionDetail(session) : null;
 }
 
-export function submitAudioTranscript(
+export async function submitAudioTranscript(
   sessionId: string,
+  userId: string,
   payload: SessionAudioUploadRequest | undefined
-): AudioUploadResponse | null {
-  const session = sessions.get(sessionId);
+): Promise<AudioUploadResponse | null> {
+  const session = loadSession(sessionId, userId);
 
   if (!session) {
     return null;
   }
 
-  const normalizedTranscript = payload?.transcript?.trim() || buildFallbackTranscript(session);
+  const messageHistoryBeforeAnswer = loadMessages(sessionId);
+  const transcriptResult = await resolveTranscript(session, payload);
+  const normalizedTranscript = transcriptResult.transcript.trim();
+  assertSafeUserContent(normalizedTranscript);
   const createdAt = nowIso();
   const duration = Math.max(8, Math.round(payload?.duration ?? Math.max(12, normalizedTranscript.length * 1.8)));
   const segments = buildSegments(normalizedTranscript, duration, createdAt);
+  const userMessage = createMessage('user', normalizedTranscript, {
+    id: makeId('msg'),
+    createdAt,
+    displayType: payload?.format === 'mock-text' ? 'text' : 'audio',
+    transcript: normalizedTranscript,
+    duration,
+    recordingMode: payload?.isLocked ? 'locked' : payload?.recordingMode ?? 'press-hold',
+    statusLabel: transcriptResult.statusLabel,
+    segments
+  });
+  const fallbackNext = getNextQuestion(session);
+  const nextQuestion =
+    (await generateFollowupQuestion({
+      bookType: session.bookType,
+      messages: [...messageHistoryBeforeAnswer, userMessage],
+      answerCount: session.answerCount + 1
+    })) || fallbackNext.nextQuestion;
+  const nextQuestionIndex = fallbackNext.nextQuestionIndex;
+  const assistantMessage = createMessage('assistant', nextQuestion);
+  const answerCount = session.answerCount + 1;
+  const nextStatus: SessionStatus = answerCount >= 2 ? 'preview-ready' : 'collecting';
 
-  session.messages.push(
-    createMessage('user', normalizedTranscript, {
-      createdAt,
-      displayType: 'audio',
-      transcript: normalizedTranscript,
-      duration,
-      recordingMode: payload?.isLocked ? 'locked' : payload?.recordingMode ?? 'press-hold',
-      statusLabel: payload?.isLocked ? '锁定录音' : '按住录音',
-      segments
-    })
-  );
-  session.answerCount += 1;
+  runInTransaction(() => {
+    database
+      .prepare(
+        `
+          INSERT INTO messages (
+            id, session_id, role, content, created_at, display_type, transcript, duration,
+            time_label, recording_mode, status_label, segments_json
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+      )
+      .run(
+        userMessage.id,
+        sessionId,
+        userMessage.role,
+        userMessage.content,
+        userMessage.createdAt,
+        userMessage.displayType ?? null,
+        userMessage.transcript ?? null,
+        userMessage.duration ?? null,
+        userMessage.timeLabel ?? null,
+        userMessage.recordingMode ?? null,
+        userMessage.statusLabel ?? null,
+        JSON.stringify(userMessage.segments ?? [])
+      );
 
-  const nextQuestion = getNextQuestion(session);
-  session.messages.push(createMessage('assistant', nextQuestion));
-  updateSessionStatus(session);
+    database
+      .prepare(
+        `
+          INSERT INTO messages (
+            id, session_id, role, content, created_at, display_type, transcript, duration,
+            time_label, recording_mode, status_label, segments_json
+          )
+          VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, ?, NULL, NULL, NULL)
+        `
+      )
+      .run(
+        assistantMessage.id,
+        sessionId,
+        assistantMessage.role,
+        assistantMessage.content,
+        assistantMessage.createdAt,
+        assistantMessage.timeLabel ?? null
+      );
+
+    database
+      .prepare(
+        `
+          UPDATE sessions
+          SET answer_count = ?, current_question_index = ?, current_question = ?, status = ?, updated_at = ?
+          WHERE id = ? AND user_id = ?
+        `
+      )
+      .run(answerCount, nextQuestionIndex, nextQuestion, nextStatus, createdAt, sessionId, userId);
+  });
 
   return {
-    messageId: session.messages[session.messages.length - 2]?.id ?? makeId('msg'),
+    messageId: userMessage.id,
     transcript: normalizedTranscript,
     segments,
     nextQuestion,
-    canGenerate: canGeneratePreview(session),
-    answerCount: session.answerCount
+    canGenerate: answerCount >= 2,
+    answerCount
   };
 }
 
-export function skipQuestion(sessionId: string) {
-  const session = sessions.get(sessionId);
+export function skipQuestion(sessionId: string, userId: string) {
+  const session = loadSession(sessionId, userId);
 
   if (!session) {
     return null;
   }
 
-  const nextQuestion = getNextQuestion(session);
-  session.skippedCount += 1;
-  session.messages.push(createMessage('assistant', nextQuestion));
-  updateSessionStatus(session);
+  const timestamp = nowIso();
+  const { nextQuestion, nextQuestionIndex } = getNextQuestion(session);
+  const assistantMessage = createMessage('assistant', nextQuestion, { createdAt: timestamp });
+  const skippedCount = session.skippedCount + 1;
+
+  runInTransaction(() => {
+    database
+      .prepare(
+        `
+          INSERT INTO messages (
+            id, session_id, role, content, created_at, display_type, transcript, duration,
+            time_label, recording_mode, status_label, segments_json
+          )
+          VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, ?, NULL, NULL, NULL)
+        `
+      )
+      .run(
+        assistantMessage.id,
+        sessionId,
+        assistantMessage.role,
+        assistantMessage.content,
+        assistantMessage.createdAt,
+        assistantMessage.timeLabel ?? null
+      );
+
+    database
+      .prepare(
+        `
+          UPDATE sessions
+          SET skipped_count = ?, current_question_index = ?, current_question = ?, updated_at = ?
+          WHERE id = ? AND user_id = ?
+        `
+      )
+      .run(skippedCount, nextQuestionIndex, nextQuestion, timestamp, sessionId, userId);
+  });
 
   return {
     nextQuestion,
     canGenerate: canGeneratePreview(session),
-    skippedCount: session.skippedCount
+    skippedCount
   };
 }
 
-export function generatePreview(sessionId: string): PreviewGenerateResponse | null {
-  const session = sessions.get(sessionId);
+export async function generatePreview(sessionId: string, userId: string): Promise<PreviewGenerateResponse | null> {
+  const session = loadSession(sessionId, userId);
 
   if (!session) {
     return null;
   }
 
-  const highlights = session.messages
-    .filter((message) => message.role === 'user')
-    .map((message) => message.content);
-  const outline = buildOutline(session, highlights);
-  const summary = buildSummary(session, highlights);
-  const title = buildTitle(session, highlights);
+  const messageHistory = loadMessages(sessionId);
+  const highlights = messageHistory.filter((message) => message.role === 'user').map((message) => message.content);
+  const aiDraft = await generatePreviewDraft({
+    bookType: session.bookType,
+    messages: messageHistory
+  });
+  const outline = aiDraft?.outline ?? buildOutline(session, highlights);
+  const summary = aiDraft?.summary ?? buildSummary(session, highlights);
+  const title = aiDraft?.title ?? buildTitle(session, highlights);
   const bookId = session.bookId ?? makeId('book');
   const status: BookStatus = 'preview';
   const updatedAt = nowIso();
+  const chapters = aiDraft?.chapters ?? buildChapters(outline, highlights);
 
-  const book: BookRecord = {
-    bookId,
-    sessionId: session.id,
-    title,
-    summary,
-    status,
-    outline,
-    chapters: buildChapters(outline, highlights),
-    updatedAt
-  };
+  runInTransaction(() => {
+    database
+      .prepare(
+        `
+          INSERT INTO books (id, user_id, session_id, title, summary, status, outline_json, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            title = excluded.title,
+            summary = excluded.summary,
+            status = excluded.status,
+            outline_json = excluded.outline_json,
+            updated_at = excluded.updated_at
+        `
+      )
+      .run(bookId, userId, sessionId, title, summary, status, JSON.stringify(outline), updatedAt, updatedAt);
 
-  session.bookId = bookId;
-  session.status = 'preview-ready';
-  session.updatedAt = updatedAt;
-  books.set(bookId, book);
+    database.prepare(`DELETE FROM chapters WHERE book_id = ?`).run(bookId);
+
+    const insertChapter = database.prepare(
+      `
+        INSERT INTO chapters (id, book_id, sort_order, title, summary, content)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `
+    );
+
+    chapters.forEach((chapter, index) => {
+      insertChapter.run(makeId('chapter'), bookId, index + 1, chapter.title, chapter.summary, chapter.content);
+    });
+
+    database
+      .prepare(
+        `
+          UPDATE sessions
+          SET book_id = ?, status = 'preview-ready', updated_at = ?
+          WHERE id = ? AND user_id = ?
+        `
+      )
+      .run(bookId, updatedAt, sessionId, userId);
+  });
 
   return {
     bookId,
@@ -409,21 +723,68 @@ export function generatePreview(sessionId: string): PreviewGenerateResponse | nu
   };
 }
 
-export function getBook(bookId: string) {
-  return books.get(bookId) ?? null;
+export function getBook(bookId: string, userId: string) {
+  const row = database
+    .prepare(
+      `
+        SELECT id, session_id, title, summary, status, outline_json, updated_at
+        FROM books
+        WHERE id = ? AND user_id = ?
+      `
+    )
+    .get(bookId, userId) as Record<string, unknown> | undefined;
+
+  if (!row) {
+    return null;
+  }
+
+  const chapterRows = database
+    .prepare(
+      `
+        SELECT title, summary, content
+        FROM chapters
+        WHERE book_id = ?
+        ORDER BY sort_order ASC, rowid ASC
+      `
+    )
+    .all(bookId) as Array<Record<string, unknown>>;
+
+  return {
+    bookId: String(row.id),
+    sessionId: String(row.session_id),
+    title: String(row.title),
+    summary: String(row.summary),
+    status: row.status as BookStatus,
+    outline: parseJson<PreviewOutlineItem[]>(String(row.outline_json), []),
+    chapters: chapterRows.map((chapter) => ({
+      title: String(chapter.title),
+      summary: String(chapter.summary),
+      content: String(chapter.content)
+    })),
+    updatedAt: String(row.updated_at)
+  } satisfies BookDetailResponse;
 }
 
-export function getMyBooks(): MyBooksResponse {
-  const items = [...books.values()]
-    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-    .map((book) => ({
-      bookId: book.bookId,
-      sessionId: book.sessionId,
-      title: book.title,
-      summary: book.summary,
-      status: book.status,
-      updatedAt: book.updatedAt
-    }));
+export function getMyBooks(userId: string): MyBooksResponse {
+  const rows = database
+    .prepare(
+      `
+        SELECT id, session_id, title, summary, status, updated_at
+        FROM books
+        WHERE user_id = ?
+        ORDER BY updated_at DESC, rowid DESC
+      `
+    )
+    .all(userId) as Array<Record<string, unknown>>;
+
+  const items = rows.map((book) => ({
+    bookId: String(book.id),
+    sessionId: String(book.session_id),
+    title: String(book.title),
+    summary: String(book.summary),
+    status: book.status as BookStatus,
+    updatedAt: String(book.updated_at)
+  }));
 
   return { items };
 }

@@ -10,3 +10,7 @@ coverage
 *.log
 apps/miniprogram/unpackage
 apps/miniprogram/dist
+apps/server/.data
+.local/talkbook.sqlite
+.local/talkbook.sqlite-*
+.local/smoke-tests

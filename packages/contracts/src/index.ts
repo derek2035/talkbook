@@ -42,6 +42,9 @@ export interface SessionCreateResponse {
 
 export interface SessionAudioUploadRequest {
   transcript?: string;
+  audioBase64?: string;
+  audioMimeType?: string;
+  audioFileName?: string;
   duration?: number;
   format?: string;
   recordingMode?: RecordingMode;

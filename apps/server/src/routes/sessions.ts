@@ -20,11 +20,33 @@ export function createSessionHandler(
   req: Request<unknown, SessionCreateResponse, SessionCreateRequest>,
   res: Response<SessionCreateResponse>
 ) {
-  res.json(createSession(req.body?.bookType));
+  const userId = req.auth?.userId;
+
+  if (!userId) {
+    res.status(401).end();
+    return;
+  }
+
+  res.json(createSession(userId, req.body?.bookType));
 }
 
 export function getSessionHandler(req: Request<{ sessionId: string }>, res: Response<SessionDetailResponse>) {
-  const session = getSession(req.params.sessionId);
+  const userId = req.auth?.userId;
+
+  if (!userId) {
+    res.status(401).json({
+      sessionId: req.params.sessionId,
+      bookType: 'memoir',
+      status: 'collecting',
+      currentQuestion: '',
+      messages: [],
+      canGenerate: false,
+      answerCount: 0
+    });
+    return;
+  }
+
+  const session = getSession(req.params.sessionId, userId);
 
   if (!session) {
     res.status(404).json({
@@ -42,11 +64,18 @@ export function getSessionHandler(req: Request<{ sessionId: string }>, res: Resp
   res.json(session);
 }
 
-export function uploadAudioHandler(
+export async function uploadAudioHandler(
   req: Request<{ sessionId: string }, AudioUploadResponse, SessionAudioUploadRequest>,
   res: Response<AudioUploadResponse | { error: string }>
 ) {
-  const result = submitAudioTranscript(req.params.sessionId, req.body);
+  const userId = req.auth?.userId;
+
+  if (!userId) {
+    res.status(401).json({ error: '缺少登录凭证，请重新登录' });
+    return;
+  }
+
+  const result = await submitAudioTranscript(req.params.sessionId, userId, req.body);
 
   if (!result) {
     res.status(404).json({ error: 'Session not found' });
@@ -60,7 +89,14 @@ export function skipQuestionHandler(
   req: Request<{ sessionId: string }>,
   res: Response<SkipQuestionResponse | { error: string }>
 ) {
-  const result = skipQuestion(req.params.sessionId);
+  const userId = req.auth?.userId;
+
+  if (!userId) {
+    res.status(401).json({ error: '缺少登录凭证，请重新登录' });
+    return;
+  }
+
+  const result = skipQuestion(req.params.sessionId, userId);
 
   if (!result) {
     res.status(404).json({ error: 'Session not found' });
@@ -70,11 +106,18 @@ export function skipQuestionHandler(
   res.json(result);
 }
 
-export function generatePreviewHandler(
+export async function generatePreviewHandler(
   req: Request<{ sessionId: string }>,
   res: Response<PreviewGenerateResponse | { error: string }>
 ) {
-  const preview = generatePreview(req.params.sessionId);
+  const userId = req.auth?.userId;
+
+  if (!userId) {
+    res.status(401).json({ error: '缺少登录凭证，请重新登录' });
+    return;
+  }
+
+  const preview = await generatePreview(req.params.sessionId, userId);
 
   if (!preview) {
     res.status(404).json({ error: 'Session not found' });

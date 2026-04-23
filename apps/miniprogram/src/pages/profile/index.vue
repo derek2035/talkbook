@@ -1,6 +1,8 @@
 <template>
   <view class="tb-page tb-safe-bottom">
-    <view class="tb-content">
+    <PageHeader title="我的书稿" />
+
+    <view class="tb-content profile-content">
       <view class="account-card">
         <view v-if="userProfile?.avatarUrl" class="account-card__avatar">
           <image class="account-card__avatar-image" :src="userProfile.avatarUrl" mode="aspectFill" />
@@ -66,8 +68,12 @@
           <text class="utility-card__label">订单记录</text>
           <text class="utility-card__value">后续开放</text>
         </button>
-        <button class="utility-card__item" @tap="showUtilityToast('版权与协议')">
-          <text class="utility-card__label">版权与协议</text>
+        <button class="utility-card__item" @tap="openPolicy('privacy')">
+          <text class="utility-card__label">隐私政策</text>
+          <text class="utility-card__value">查看说明</text>
+        </button>
+        <button class="utility-card__item" @tap="openPolicy('terms')">
+          <text class="utility-card__label">用户协议</text>
           <text class="utility-card__value">查看说明</text>
         </button>
       </view>
@@ -83,6 +89,7 @@ import { onShow } from '@dcloudio/uni-app';
 import type { BookStatus, MyBookItem } from '@talkbook/contracts';
 
 import BottomNav from '../../components/BottomNav.vue';
+import PageHeader from '../../components/PageHeader.vue';
 import { getMyBooks } from '../../services/api';
 import { useAppStore } from '../../stores/useAppStore';
 
@@ -139,6 +146,12 @@ function previewBook(bookId: string, sessionId: string) {
   });
 }
 
+function openPolicy(type: 'privacy' | 'terms') {
+  uni.navigateTo({
+    url: type === 'privacy' ? '/pages/privacy/index' : '/pages/terms/index'
+  });
+}
+
 function showUtilityToast(label: string) {
   uni.showToast({
     title: `${label}后续接入`,
@@ -159,6 +172,10 @@ onShow(() => {
 </script>
 
 <style scoped>
+.profile-content {
+  padding-top: 18rpx;
+}
+
 .account-card {
   display: flex;
   align-items: center;

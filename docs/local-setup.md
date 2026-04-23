@@ -62,11 +62,11 @@ git status
 
 ## 当前仓库状态说明
 
-当前仓库已完成基础工程初始化，当前重点是：
+当前仓库已完成基础工程初始化，并已具备本地可演示的 MVP 主链路。当前重点是：
 
-- 封版产品需求与接口范围
-- 按文档推进 MVP 主链路开发
-- 保持仓库独立、环境清晰、联调稳定
+- 继续收口页面与交互细节
+- 保持鉴权、持久化和联调环境稳定
+- 为真实 ASR / LLM 接入保留清晰边界
 
 所以现在本地 clone 完成后，优先阅读：
 
@@ -82,6 +82,7 @@ git status
 pnpm install
 pnpm typecheck
 pnpm build:server
+pnpm test:smoke
 ```
 
 ## 本地环境变量
@@ -119,11 +120,44 @@ cp apps/server/.env.example apps/server/.env
 常用字段：
 
 - `PORT`：服务端监听端口
-- `AI_PROVIDER`：后续真实模型接入时使用
-- `ASR_PROVIDER`：后续真实语音识别接入时使用
+- `AI_PROVIDER`：模型 Provider，当前已支持 `doubao` 与 `mock`
+- `ASR_PROVIDER`：语音识别 Provider，当前已支持 `doubao` 与 `mock`
+- `AI_MODEL`：真实聊天模型 ID
+- `AI_API_KEY`：聊天模型 API Key；若使用火山方舟，也可直接配置 `ARK_API_KEY`
+- `AI_BASE_URL`：聊天模型基础地址；若使用火山方舟，也可直接配置 `ARK_BASE_URL`
+- `ASR_API_KEY`：火山语音 API Key；新版控制台可直接使用 API Key，通常也可复用 `ARK_API_KEY`
+- `ASR_BASE_URL`：火山语音服务基础地址，默认 `https://openspeech.bytedance.com`
+- `ASR_RESOURCE_ID`：火山语音资源 ID；当前录音直传链路推荐 `volc.bigasr.auc_turbo`
+- `ASR_REQUEST_MODEL`：火山语音请求体里的 `model_name`，默认 `bigmodel`
+- `ASR_APP_KEY`：仅旧版控制台鉴权需要；新版控制台通常留空
+- `ASR_MODEL`：保留给旧的 OpenAI 兼容配置或兼容旧环境变量；新配置优先使用 `ASR_RESOURCE_ID`
 - `WECHAT_APP_ID`：服务端换取微信用户身份时使用
 - `WECHAT_APP_SECRET`：服务端换取微信用户身份时使用
 - `ALLOW_MOCK_WECHAT_LOGIN`：本地未配置微信密钥时，是否允许自动回退到开发登录
+- `AUTH_TOKEN_SECRET`：服务端签发和校验登录 token 时使用
+- `DATABASE_PATH`：SQLite 数据库文件路径，默认写入仓库 `.local/talkbook.sqlite`
+
+### 火山语音配置建议
+
+- 如果你沿用当前 Talkbook 小程序“录音结束后直传音频”的实现，请优先使用火山语音原生 **极速版**：
+
+```bash
+ASR_PROVIDER=doubao
+ASR_API_KEY=<你的 API Key>
+ASR_RESOURCE_ID=volc.bigasr.auc_turbo
+ASR_REQUEST_MODEL=bigmodel
+ASR_BASE_URL=https://openspeech.bytedance.com
+```
+
+- 如果你改用火山语音标准版资源（如 `volc.seedasr.auc` 或 `volc.bigasr.auc`），官方接口要求提交公网可访问的音频 URL。当前仓库尚未内置对象存储上传，因此不能直接拿本地录音 base64 走标准版。
+
+如果服务端启动后想确认真实能力是否已生效，可访问：
+
+```bash
+curl http://localhost:3000/ready
+```
+
+返回里的 `aiMode/asrMode` 为 `real` 时，表示当前环境变量足以启用真实调用。
 
 ## 如果已经放错目录怎么办
 

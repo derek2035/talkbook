@@ -50,6 +50,13 @@
           使用微信身份继续
         </button>
         <button class="tb-ghost-button login-card__button" @tap="goBack">暂不登录</button>
+
+        <view class="agreement-row">
+          <text class="agreement-row__text">继续即表示你已阅读并同意</text>
+          <button class="agreement-row__link" @tap="openPolicy('terms')">《用户协议》</button>
+          <text class="agreement-row__text">和</text>
+          <button class="agreement-row__link" @tap="openPolicy('privacy')">《隐私政策》</button>
+        </view>
       </view>
     </view>
   </view>
@@ -132,6 +139,12 @@ function applyProfileDraft(session: WeChatLoginResponse): WeChatLoginResponse {
     nickname: draftNickname.value || session.nickname,
     avatarUrl: draftAvatarUrl.value || session.avatarUrl
   };
+}
+
+function openPolicy(type: 'privacy' | 'terms') {
+  uni.navigateTo({
+    url: type === 'privacy' ? '/pages/privacy/index' : '/pages/terms/index'
+  });
 }
 
 async function handleLogin() {
@@ -319,5 +332,29 @@ onLoad((query) => {
 .login-card__button {
   width: 100%;
   margin-top: 22rpx;
+}
+
+.agreement-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  margin-top: 22rpx;
+}
+
+.agreement-row__text,
+.agreement-row__link {
+  font-size: 22rpx;
+  line-height: 1.7;
+}
+
+.agreement-row__text {
+  color: var(--tb-text-muted);
+}
+
+.agreement-row__link {
+  color: var(--tb-primary);
+  font-weight: 600;
 }
 </style>

@@ -1,9 +1,11 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 
 import type { Request, Response } from 'express';
 import type { WeChatLoginRequest, WeChatLoginResponse } from '@talkbook/contracts';
 
 import { env } from '../config/env.js';
+import { createAuthToken } from '../lib/auth-token.js';
+import { upsertUser } from '../lib/talkbook-store.js';
 
 interface WeChatCode2SessionResponse {
   openid?: string;
@@ -16,8 +18,7 @@ function buildUserId(openId: string) {
 }
 
 function buildToken(userId: string, openId: string) {
-  const raw = `${userId}:${openId}:${randomUUID()}`;
-  return `tk_${Buffer.from(raw).toString('base64url').slice(0, 32)}`;
+  return createAuthToken(userId, openId);
 }
 
 async function exchangeCodeForOpenId(code: string) {
@@ -51,8 +52,9 @@ async function exchangeCodeForOpenId(code: string) {
   }
 
   if (env.allowMockWeChatLogin) {
+    const normalizedCode = code.trim() || 'talkbook_dev';
     return {
-      openId: 'mock_openid_talkbook_dev',
+      openId: `mock_openid_${createHash('sha256').update(normalizedCode).digest('hex').slice(0, 16)}`,
       loginMode: 'mock' as const
     };
   }
@@ -75,12 +77,20 @@ export async function wechatLoginHandler(
     const session = await exchangeCodeForOpenId(code);
     const userId = buildUserId(session.openId);
     const nickname = session.loginMode === 'wechat' ? '微信用户' : '开发环境用户';
+    const avatarUrl = '';
+
+    upsertUser({
+      userId,
+      openId: session.openId,
+      nickname,
+      avatarUrl
+    });
 
     res.json({
       userId,
       openId: session.openId,
       nickname,
-      avatarUrl: '',
+      avatarUrl,
       token: buildToken(userId, session.openId),
       loginMode: session.loginMode
     });

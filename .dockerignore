@@ -1,0 +1,14 @@
+.git
+.local
+.DS_Store
+.env
+.env.*
+**/.env
+**/.env.*
+node_modules
+**/node_modules
+coverage
+**/coverage
+apps/miniprogram/dist
+apps/miniprogram/unpackage
+apps/server/dist

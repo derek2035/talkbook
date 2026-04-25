@@ -2,10 +2,6 @@
   <view class="tb-page tb-safe-bottom">
     <PageHeader
       title="Talkbook"
-      :show-login="!appStore.isLoggedIn"
-      :avatar-text="appStore.isLoggedIn ? appStore.userProfile?.avatarText : ''"
-      @login="goLogin"
-      @avatar-tap="goProfile"
     />
 
     <view class="tb-content home-content">
@@ -36,7 +32,7 @@
         </view>
         <view v-else class="progress-card__body">
           <text class="progress-card__title">登录后可同步你的创作进度</text>
-          <text class="progress-card__text">顶部可直接微信登录。登录后，采访记录和书稿会按你的身份保存。</text>
+          <text class="progress-card__text">点击开始创作后会先完成微信登录。登录后，采访记录和书稿会按你的身份保存。</text>
         </view>
       </view>
 
@@ -50,9 +46,13 @@
             :class="{ 'type-card--active': item.key === selectedBookType }"
             @tap="choose(item.key)"
           >
-            <text class="type-card__title">{{ item.label }}</text>
-            <text class="type-card__desc">{{ item.description }}</text>
-            <text v-if="item.key === selectedBookType" class="type-card__tag">已选择</text>
+            <view class="type-card__body">
+              <text class="type-card__title">{{ item.label }}</text>
+              <text class="type-card__desc">{{ item.description }}</text>
+            </view>
+            <view class="type-card__state">
+              <view v-if="item.key === selectedBookType" class="type-card__check" />
+            </view>
           </button>
         </view>
       </view>
@@ -172,17 +172,17 @@ onShow(() => {
 }
 
 .intro-card {
-  padding: 36rpx 32rpx;
-  border-radius: 36rpx;
-  background: linear-gradient(180deg, #fff1ed 0%, #fdeae4 100%);
+  padding: 30rpx 28rpx;
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .intro-card__title {
   display: block;
-  font-size: 46rpx;
-  line-height: 1.28;
+  font-size: 40rpx;
+  line-height: 1.3;
   font-weight: 700;
-  color: var(--tb-primary);
+  color: var(--tb-text);
 }
 
 .intro-card__desc {
@@ -194,10 +194,10 @@ onShow(() => {
 }
 
 .progress-card {
-  margin-top: 24rpx;
+  margin-top: 18rpx;
   padding: 28rpx;
-  border-radius: 30rpx;
-  background: rgba(255, 255, 255, 0.82);
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .progress-card__head {
@@ -210,11 +210,11 @@ onShow(() => {
 .progress-card__link {
   min-height: 56rpx;
   padding: 0 20rpx;
-  border-radius: var(--tb-radius-pill);
-  background: var(--tb-surface-low);
+  border-radius: 10rpx;
+  background: #f6f6f6;
   font-size: 22rpx;
   font-weight: 600;
-  color: var(--tb-primary);
+  color: var(--tb-secondary);
 }
 
 .progress-card__body {
@@ -238,55 +238,86 @@ onShow(() => {
 }
 
 .section {
-  margin-top: 28rpx;
+  margin-top: 24rpx;
 }
 
 .type-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   margin-top: 18rpx;
+  overflow: hidden;
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .type-card {
-  min-height: 228rpx;
-  padding: 26rpx;
-  border-radius: 28rpx;
-  background: var(--tb-surface-card);
+  width: 100%;
+  min-height: 122rpx;
+  padding: 24rpx 26rpx;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  gap: 22rpx;
   text-align: left;
 }
 
+.type-card + .type-card {
+  border-top: 2rpx solid var(--tb-outline);
+}
+
 .type-card--active {
-  background: #ffd9cd;
-  box-shadow: inset 0 0 0 2rpx rgba(155, 63, 30, 0.18);
+  background: #f7fffb;
+  box-shadow: none;
+}
+
+.type-card__body {
+  flex: 1;
+  min-width: 0;
 }
 
 .type-card__title {
-  font-size: 32rpx;
+  display: block;
+  font-size: 30rpx;
   line-height: 1.35;
   font-weight: 700;
   color: var(--tb-text);
 }
 
 .type-card__desc {
+  display: block;
   margin-top: 12rpx;
   font-size: 24rpx;
   line-height: 1.6;
   color: var(--tb-text-muted);
 }
 
-.type-card__tag {
-  margin-top: 18rpx;
-  padding: 8rpx 16rpx;
-  border-radius: var(--tb-radius-pill);
-  font-size: 22rpx;
-  font-weight: 600;
-  color: var(--tb-secondary);
-  background: rgba(255, 255, 255, 0.72);
+.type-card__state {
+  width: 42rpx;
+  height: 42rpx;
+  border-radius: 999rpx;
+  border: 3rpx solid var(--tb-outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.type-card--active .type-card__state {
+  border-color: var(--tb-primary);
+  background: var(--tb-primary);
+}
+
+.type-card__check {
+  width: 18rpx;
+  height: 10rpx;
+  border-left: 4rpx solid #fff;
+  border-bottom: 4rpx solid #fff;
+  transform: rotate(-45deg) translate(1rpx, -1rpx);
 }
 
 .error-message {

@@ -6,9 +6,9 @@
       <view class="tb-content interview-content">
         <view class="context-row">
           <text class="tb-chip tb-chip--soft">{{ selectedBookTypeLabel }}</text>
-          <text class="tb-chip tb-chip--soft">会话 {{ sessionShortId }}</text>
+          <text class="tb-chip tb-chip--soft">第 {{ answerCount + 1 }} 轮</text>
           <text class="tb-chip" :class="canGenerate ? 'tb-chip--warm' : 'tb-chip--soft'">
-            {{ canGenerate ? '可生成预览' : `已回答 ${answerCount} 次` }}
+            {{ progressChipText }}
           </text>
         </view>
 
@@ -19,7 +19,7 @@
             {{
               canGenerate
                 ? '素材已经达到预览标准，可以继续补充更多细节，也可以直接生成书稿预览。'
-                : '先回答当前问题，连续积累两次有效回答后会解锁预览。'
+                : '完成两轮有效回答后可生成预览。'
             }}
           </text>
         </view>
@@ -29,7 +29,7 @@
             <view>
               <text class="section-head__title">采访记录</text>
               <text class="section-head__tip">
-                {{ timelineViewMode === 'audio' ? '回听录音分段，按时间回看每轮讲述。' : '阅读整理后的文字记录，快速确认关键信息。' }}
+                {{ timelineViewMode === 'audio' ? '按轮次回听讲述。' : '查看整理后的文字。' }}
               </text>
             </view>
 
@@ -69,11 +69,19 @@
                 <text class="assistant-bubble__text">{{ message.content }}</text>
               </view>
 
-              <view v-else class="response-card">
-                <view v-if="timelineViewMode === 'text'" class="response-card__block">
+              <view
+                v-else
+                class="response-card"
+                :class="isAudioMessage(message) ? 'response-card--audio' : 'response-card--text'"
+              >
+                <view v-if="timelineViewMode === 'text' || !isAudioMessage(message)" class="response-card__block">
                   <view class="response-card__head">
-                    <text class="response-card__label">文字记录</text>
-                    <text class="response-card__meta">{{ message.statusLabel || '已保存' }}</text>
+                    <text class="response-card__label">
+                      {{ isAudioMessage(message) ? '转写文字' : '文字回答' }}
+                    </text>
+                    <text class="response-card__meta">
+                      {{ isAudioMessage(message) ? message.statusLabel || '已保存' : '无音频' }}
+                    </text>
                   </view>
                   <text class="response-card__text">{{ message.transcript || message.content }}</text>
                 </view>
@@ -145,7 +153,7 @@
           <view class="composer-card__head">
             <view>
               <text class="composer-card__title">回答这一问</text>
-              <text class="composer-card__desc">语音适合完整讲述，文字适合快速补充，二者会同时沉淀进采访记录。</text>
+              <text class="composer-card__desc">先讲完整，再补关键词。</text>
             </view>
             <view class="status-badge" :class="`status-badge--${recordingStatus}`">
               {{ recordingStatusText }}
@@ -176,7 +184,7 @@
                 <text class="recorder-panel__value">{{ formatDuration(recordingDuration) }}</text>
               </view>
               <text class="recorder-panel__hint">
-                支持开始、暂停、继续、结束。录音结束后会按语义分段保存，便于后续回听。
+                录完会自动保存到采访记录。
               </text>
 
               <view class="recorder-panel__actions">
@@ -207,7 +215,7 @@
                 v-model="audioNotes"
                 class="notes-panel__input"
                 maxlength="800"
-                placeholder="录音之外，还可以补一两句关键信息，系统会和语音一起保存。"
+                placeholder="补充人物关系、时间地点或重要细节。"
               />
             </view>
           </view>
@@ -219,7 +227,7 @@
                 v-model="textDraft"
                 class="notes-panel__input notes-panel__input--tall"
                 maxlength="800"
-                placeholder="直接输入这轮讲述内容。适合先写下关键事实、关系和情绪。"
+                placeholder="写下这一轮回答。"
               />
             </view>
 
@@ -295,13 +303,12 @@ let recordingTimer: ReturnType<typeof setInterval> | null = null;
 let currentRecordingMode: RecordingMode = 'locked';
 const recorderManager = typeof uni.getRecorderManager === 'function' ? uni.getRecorderManager() : null;
 
-const sessionShortId = computed(() => {
-  const id = activeSessionId.value || sessionId.value;
-  if (!id) {
-    return '--';
+const progressChipText = computed(() => {
+  if (canGenerate.value) {
+    return '可生成预览';
   }
 
-  return id.length > 12 ? `${id.slice(0, 10)}...` : id;
+  return `${Math.min(answerCount.value, 2)}/2 解锁预览`;
 });
 
 const recordingStatusText = computed(() => {
@@ -328,6 +335,10 @@ function formatMessageTime(createdAt: string) {
   const hours = `${date.getHours()}`.padStart(2, '0');
   const minutes = `${date.getMinutes()}`.padStart(2, '0');
   return `${hours}:${minutes}`;
+}
+
+function isAudioMessage(message: SessionMessage) {
+  return message.displayType === 'audio' || (!message.displayType && Boolean(message.segments?.length));
 }
 
 function buildSegmentMeta(message: SessionMessage) {
@@ -659,7 +670,7 @@ onUnload(() => {
 
 <style scoped>
 .interview-scroll {
-  height: calc(100vh - 112rpx);
+  height: calc(100vh - var(--tb-topbar-height));
 }
 
 .interview-content {
@@ -668,51 +679,50 @@ onUnload(() => {
 }
 
 .section {
-  margin-top: 30rpx;
+  margin-top: 28rpx;
 }
 
 .context-row {
   display: flex;
-  gap: 12rpx;
+  gap: 10rpx;
   flex-wrap: wrap;
 }
 
 .question-card {
-  margin-top: 20rpx;
-  padding: 30rpx;
-  border-radius: 32rpx;
-  background: linear-gradient(180deg, #fff1ed 0%, #f8e4de 100%);
+  margin-top: 18rpx;
+  padding: 28rpx 30rpx;
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .question-card__eyebrow {
   display: block;
   font-size: 22rpx;
-  letter-spacing: 2rpx;
   color: var(--tb-text-muted);
 }
 
 .question-card__title {
   display: block;
-  margin-top: 16rpx;
-  font-size: 40rpx;
-  line-height: 1.45;
+  margin-top: 14rpx;
+  font-size: 38rpx;
+  line-height: 1.38;
   font-weight: 700;
   color: var(--tb-text);
 }
 
 .question-card__tip {
   display: block;
-  margin-top: 16rpx;
+  margin-top: 14rpx;
   font-size: 24rpx;
-  line-height: 1.7;
+  line-height: 1.6;
   color: var(--tb-text-muted);
 }
 
 .section-head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18rpx;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16rpx;
 }
 
 .section-head__title {
@@ -730,26 +740,36 @@ onUnload(() => {
 }
 
 .timeline-switch {
-  display: inline-flex;
+  align-self: center;
+  display: flex;
   align-items: center;
-  gap: 8rpx;
-  padding: 8rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.82);
+  justify-content: center;
+  gap: 0;
+  width: 360rpx;
+  max-width: 100%;
+  padding: 4rpx;
+  border-radius: 10rpx;
+  background: #f6f6f6;
+  border: 2rpx solid rgba(0, 0, 0, 0.04);
 }
 
 .timeline-switch__item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 56rpx;
-  padding: 0 20rpx;
-  border-radius: 999rpx;
+  padding: 0 12rpx;
+  border-radius: 8rpx;
   font-size: 22rpx;
   font-weight: 600;
   color: var(--tb-text-muted);
+  text-align: center;
 }
 
 .timeline-switch__item--active {
-  background: var(--tb-secondary-soft);
-  color: var(--tb-secondary);
+  background: var(--tb-primary);
+  color: #fff;
 }
 
 .timeline {
@@ -757,7 +777,7 @@ onUnload(() => {
 }
 
 .message-card + .message-card {
-  margin-top: 22rpx;
+  margin-top: 28rpx;
 }
 
 .message-card__head {
@@ -765,6 +785,11 @@ onUnload(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10rpx;
+}
+
+.message-card--user .message-card__head {
+  justify-content: flex-end;
+  gap: 16rpx;
 }
 
 .message-card__author {
@@ -779,10 +804,10 @@ onUnload(() => {
 }
 
 .assistant-bubble {
-  max-width: 92%;
+  max-width: 86%;
   padding: 22rpx 24rpx;
-  border-radius: 28rpx;
-  background: var(--tb-surface-card);
+  border-radius: 10rpx;
+  background: #fff;
 }
 
 .assistant-bubble__text {
@@ -793,14 +818,27 @@ onUnload(() => {
 
 .response-card {
   padding: 24rpx;
-  border-radius: 30rpx;
-  background: var(--tb-surface-card);
+  border-radius: 10rpx;
+  border: 2rpx solid rgba(0, 0, 0, 0.04);
+}
+
+.response-card--text {
+  background: #dcf8c6;
+}
+
+.response-card--audio {
+  background: #fff;
+}
+
+.message-card--user .response-card {
+  max-width: 86%;
+  margin-left: auto;
 }
 
 .response-card__block + .response-card__block {
   margin-top: 20rpx;
   padding-top: 20rpx;
-  border-top: 2rpx solid rgba(155, 63, 30, 0.08);
+  border-top: 2rpx solid rgba(0, 0, 0, 0.06);
 }
 
 .response-card__head {
@@ -818,7 +856,7 @@ onUnload(() => {
 
 .response-card__meta {
   font-size: 22rpx;
-  color: var(--tb-text-muted);
+  color: rgba(31, 31, 31, 0.58);
 }
 
 .response-card__text {
@@ -835,8 +873,8 @@ onUnload(() => {
 
 .segment-item {
   padding: 20rpx;
-  border-radius: 24rpx;
-  background: rgba(255, 255, 255, 0.76);
+  border-radius: 10rpx;
+  background: var(--tb-surface-low);
 }
 
 .segment-item + .segment-item {
@@ -870,18 +908,18 @@ onUnload(() => {
   min-width: 104rpx;
   min-height: 60rpx;
   padding: 0 20rpx;
-  border-radius: var(--tb-radius-pill);
+  border-radius: 8rpx;
   font-size: 24rpx;
   font-weight: 600;
   background: #fff;
-  color: var(--tb-primary);
+  color: var(--tb-text);
 }
 
 .segment-item__track {
   flex: 1;
   height: 12rpx;
   border-radius: 999rpx;
-  background: rgba(155, 63, 30, 0.12);
+  background: rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
@@ -902,8 +940,8 @@ onUnload(() => {
 .empty-card {
   margin-top: 16rpx;
   padding: 30rpx;
-  border-radius: 30rpx;
-  background: var(--tb-surface-low);
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .empty-card__title {
@@ -922,7 +960,8 @@ onUnload(() => {
 }
 
 .composer-card {
-  padding: 28rpx;
+  padding: 26rpx;
+  border-radius: 20rpx;
 }
 
 .composer-card__head {
@@ -941,9 +980,9 @@ onUnload(() => {
 
 .composer-card__desc {
   display: block;
-  margin-top: 10rpx;
+  margin-top: 8rpx;
   font-size: 24rpx;
-  line-height: 1.65;
+  line-height: 1.5;
   color: var(--tb-text-muted);
 }
 
@@ -951,7 +990,7 @@ onUnload(() => {
   min-width: 112rpx;
   min-height: 52rpx;
   padding: 0 18rpx;
-  border-radius: var(--tb-radius-pill);
+  border-radius: 8rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -960,7 +999,7 @@ onUnload(() => {
 }
 
 .status-badge--idle {
-  background: rgba(255, 255, 255, 0.72);
+  background: #f6f6f6;
   color: var(--tb-text-muted);
 }
 
@@ -971,16 +1010,16 @@ onUnload(() => {
 }
 
 .status-badge--paused {
-  background: rgba(255, 189, 167, 0.6);
-  color: var(--tb-secondary);
+  background: #fff7e6;
+  color: #b26b00;
 }
 
 .mode-switch {
   display: flex;
-  gap: 10rpx;
-  margin-top: 24rpx;
-  padding: 10rpx;
-  border-radius: var(--tb-radius-pill);
+  gap: 0;
+  margin-top: 20rpx;
+  padding: 4rpx;
+  border-radius: 10rpx;
   background: var(--tb-surface-low);
 }
 
@@ -990,7 +1029,7 @@ onUnload(() => {
   align-items: center;
   justify-content: center;
   min-height: 72rpx;
-  border-radius: var(--tb-radius-pill);
+  border-radius: 8rpx;
   font-size: 24rpx;
   line-height: 1;
   font-weight: 600;
@@ -999,19 +1038,19 @@ onUnload(() => {
 }
 
 .mode-switch__item--active {
-  background: var(--tb-secondary-soft);
-  color: var(--tb-secondary);
+  background: #fff;
+  color: var(--tb-primary);
 }
 
 .composer-body {
-  margin-top: 22rpx;
+  margin-top: 18rpx;
 }
 
 .recorder-panel,
 .notes-panel {
-  padding: 22rpx 24rpx;
-  border-radius: 24rpx;
-  background: rgba(255, 255, 255, 0.66);
+  padding: 20rpx 22rpx;
+  border-radius: 16rpx;
+  background: var(--tb-surface-low);
 }
 
 .notes-panel {
@@ -1031,24 +1070,23 @@ onUnload(() => {
 }
 
 .recorder-panel__value {
-  font-size: 40rpx;
+  font-size: 38rpx;
   font-weight: 700;
   color: var(--tb-primary);
-  letter-spacing: 2rpx;
 }
 
 .recorder-panel__hint {
   display: block;
-  margin-top: 14rpx;
+  margin-top: 10rpx;
   font-size: 24rpx;
-  line-height: 1.7;
+  line-height: 1.55;
   color: var(--tb-text-muted);
 }
 
 .recorder-panel__actions {
   display: flex;
   gap: 16rpx;
-  margin-top: 18rpx;
+  margin-top: 16rpx;
 }
 
 .recorder-panel__button {
@@ -1064,10 +1102,10 @@ onUnload(() => {
 
 .notes-panel__input {
   width: 100%;
-  min-height: 170rpx;
-  margin-top: 14rpx;
-  padding: 24rpx;
-  border-radius: 22rpx;
+  min-height: 128rpx;
+  margin-top: 12rpx;
+  padding: 22rpx;
+  border-radius: 12rpx;
   background: #fff;
   font-size: 28rpx;
   line-height: 1.7;
@@ -1075,7 +1113,7 @@ onUnload(() => {
 }
 
 .notes-panel__input--tall {
-  min-height: 240rpx;
+  min-height: 220rpx;
 }
 
 .text-submit-button {

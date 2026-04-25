@@ -173,7 +173,7 @@ onShow(() => {
 
 <style scoped>
 .profile-content {
-  padding-top: 18rpx;
+  padding-top: 20rpx;
 }
 
 .account-card {
@@ -182,8 +182,8 @@ onShow(() => {
   gap: 20rpx;
   margin-bottom: 24rpx;
   padding: 24rpx 26rpx;
-  border-radius: 30rpx;
-  background: rgba(255, 255, 255, 0.88);
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .account-card__avatar {
@@ -192,7 +192,7 @@ onShow(() => {
   border-radius: 999rpx;
   overflow: hidden;
   flex-shrink: 0;
-  background: #f6ddd4;
+  background: var(--tb-secondary-soft);
 }
 
 .account-card__avatar--fallback {
@@ -209,7 +209,7 @@ onShow(() => {
 .account-card__avatar-text {
   font-size: 38rpx;
   font-weight: 700;
-  color: var(--tb-primary);
+  color: var(--tb-primary-strong);
 }
 
 .account-card__body {
@@ -233,15 +233,15 @@ onShow(() => {
 
 .hero-card {
   padding: 34rpx 30rpx;
-  border-radius: 36rpx;
-  background: linear-gradient(180deg, #fff1ed 0%, #fdeae4 100%);
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .hero-card__title {
   display: block;
   font-size: 42rpx;
   font-weight: 700;
-  color: var(--tb-primary);
+  color: var(--tb-text);
 }
 
 .hero-card__desc {
@@ -284,7 +284,7 @@ onShow(() => {
   min-width: 220rpx;
   min-height: 88rpx;
   padding: 0 32rpx;
-  border-radius: var(--tb-radius-pill);
+  border-radius: 12rpx;
   background: var(--tb-primary);
   color: #fff;
   display: inline-flex;
@@ -306,8 +306,8 @@ onShow(() => {
 .book-card {
   margin-top: 14rpx;
   padding: 26rpx;
-  border-radius: 30rpx;
-  background: var(--tb-surface-card);
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .book-card__title {
@@ -352,8 +352,8 @@ onShow(() => {
 .empty-card {
   margin-top: 16rpx;
   padding: 30rpx;
-  border-radius: 30rpx;
-  background: var(--tb-surface-low);
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .empty-card__title {
@@ -373,8 +373,8 @@ onShow(() => {
 
 .utility-card {
   padding: 12rpx 24rpx;
-  border-radius: 30rpx;
-  background: var(--tb-surface-card);
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .utility-card__item {
@@ -385,7 +385,7 @@ onShow(() => {
 }
 
 .utility-card__item + .utility-card__item {
-  border-top: 2rpx solid rgba(221, 192, 184, 0.5);
+  border-top: 2rpx solid var(--tb-outline);
 }
 
 .utility-card__label {

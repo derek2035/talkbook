@@ -189,14 +189,14 @@ onLoad((query) => {
 
 <style scoped>
 .login-content {
-  padding-top: 56rpx;
+  padding-top: 36rpx;
 }
 
 .login-card {
   padding: 38rpx 30rpx;
-  border-radius: 36rpx;
-  background: linear-gradient(180deg, #fff1ed 0%, #fdeae4 100%);
-  box-shadow: var(--tb-shadow);
+  border-radius: 20rpx;
+  background: #fff;
+  box-shadow: none;
 }
 
 .login-card__title {
@@ -204,7 +204,7 @@ onLoad((query) => {
   font-size: 42rpx;
   line-height: 1.35;
   font-weight: 700;
-  color: var(--tb-primary);
+  color: var(--tb-text);
 }
 
 .login-card__desc {
@@ -218,15 +218,15 @@ onLoad((query) => {
 .profile-form {
   margin-top: 28rpx;
   padding: 24rpx 24rpx 8rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.82);
-  border: 2rpx solid rgba(155, 63, 30, 0.08);
+  border-radius: 16rpx;
+  background: var(--tb-surface-low);
+  border: 2rpx solid var(--tb-outline);
 }
 
 .profile-form__row {
   margin-bottom: 18rpx;
   padding: 20rpx;
-  border-radius: 24rpx;
+  border-radius: 14rpx;
   background: #fff;
 }
 
@@ -247,8 +247,8 @@ onLoad((query) => {
   justify-content: center;
   border-radius: 999rpx;
   overflow: hidden;
-  background: linear-gradient(180deg, #fff4ef 0%, #f8dfd6 100%);
-  border: 3rpx solid rgba(155, 63, 30, 0.18);
+  background: var(--tb-secondary-soft);
+  border: 3rpx solid rgba(7, 193, 96, 0.18);
   color: var(--tb-primary);
   font-size: 24rpx;
   font-weight: 700;
@@ -300,9 +300,9 @@ onLoad((query) => {
   margin-top: 18rpx;
   min-height: 88rpx;
   padding: 0 24rpx;
-  border-radius: 22rpx;
-  background: var(--tb-surface);
-  border: 2rpx solid rgba(155, 63, 30, 0.12);
+  border-radius: 12rpx;
+  background: #fff;
+  border: 2rpx solid var(--tb-outline);
   font-size: 30rpx;
   color: var(--tb-text);
 }
@@ -314,8 +314,8 @@ onLoad((query) => {
 .login-card__tips {
   margin-top: 26rpx;
   padding: 24rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.7);
+  border-radius: 16rpx;
+  background: var(--tb-surface-low);
 }
 
 .login-card__tip {

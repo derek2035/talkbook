@@ -103,9 +103,24 @@ cp apps/miniprogram/.env.example apps/miniprogram/.env
 
 ```bash
 VITE_API_BASE_URL=http://localhost:3000/api/v1
+VITE_WECHAT_CLOUD_ENV_ID=
+VITE_WECHAT_CLOUD_SERVICE_NAME=
 ```
 
 如果后续要做真机联调，把这个值替换成手机可访问的测试域名即可。
+
+如果使用微信云托管，不需要自有 HTTPS 域名。填入云环境 ID 和云托管服务名后，小程序会优先使用 `wx.cloud.callContainer`：
+
+```bash
+VITE_WECHAT_CLOUD_ENV_ID=<云环境 ID>
+VITE_WECHAT_CLOUD_SERVICE_NAME=talkbook-api
+```
+
+在微信开发者工具的本地模拟器中，代码会自动回退到 `VITE_API_BASE_URL`，避免本地 `wx.cloud.callContainer` 报 `85088 system error`。真机预览和正式环境仍会使用 `wx.cloud.callContainer`。
+
+云托管部署步骤见：
+
+[`docs/cloudbase-run.md`](/Users/derek/code/talkbook/docs/cloudbase-run.md)
 
 ### 服务端
 

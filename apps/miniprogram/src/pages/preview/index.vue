@@ -208,7 +208,7 @@ onLoad((query) => {
 
 <style scoped>
 .preview-scroll {
-  height: calc(100vh - 112rpx);
+  height: calc(100vh - var(--tb-topbar-height));
 }
 
 .preview-content {
@@ -224,8 +224,8 @@ onLoad((query) => {
 
 .preview-meta-card__item {
   padding: 24rpx;
-  border-radius: 28rpx;
-  background: var(--tb-surface-card);
+  border-radius: 18rpx;
+  background: #fff;
 }
 
 .preview-meta-card__label {
@@ -252,16 +252,16 @@ onLoad((query) => {
 .title-card,
 .summary-card {
   padding: 28rpx;
-  border-radius: 32rpx;
+  border-radius: 20rpx;
 }
 
 .title-card {
-  background: var(--tb-surface-card-strong);
+  background: #fff;
 }
 
 .summary-card {
   margin-top: 22rpx;
-  background: var(--tb-surface-card);
+  background: #fff;
 }
 
 .title-card__title {
@@ -270,7 +270,7 @@ onLoad((query) => {
   font-size: 44rpx;
   line-height: 1.35;
   font-weight: 700;
-  color: var(--tb-primary);
+  color: var(--tb-text);
 }
 
 .summary-card__text {
@@ -305,8 +305,8 @@ onLoad((query) => {
   width: 100%;
   margin-top: 14rpx;
   padding: 24rpx;
-  border-radius: 28rpx;
-  background: var(--tb-surface-card);
+  border-radius: 18rpx;
+  background: #fff;
   text-align: left;
 }
 
@@ -350,15 +350,15 @@ onLoad((query) => {
 .unlock-card {
   margin-top: 28rpx;
   padding: 28rpx;
-  border-radius: 32rpx;
-  background: linear-gradient(180deg, #fff1ed 0%, rgba(255, 189, 167, 0.52) 100%);
+  border-radius: 20rpx;
+  background: #f0fff7;
 }
 
 .unlock-card__title {
   display: block;
   font-size: 32rpx;
   font-weight: 700;
-  color: var(--tb-primary);
+  color: var(--tb-primary-strong);
 }
 
 .unlock-card__text {
@@ -372,8 +372,8 @@ onLoad((query) => {
 .empty-card {
   margin-top: 16rpx;
   padding: 28rpx;
-  border-radius: 30rpx;
-  background: var(--tb-surface-low);
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .empty-card__text {

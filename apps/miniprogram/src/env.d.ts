@@ -3,6 +3,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL?: string;
+  readonly VITE_WECHAT_CLOUD_ENV_ID?: string;
+  readonly VITE_WECHAT_CLOUD_SERVICE_NAME?: string;
 }
 
 interface ImportMeta {

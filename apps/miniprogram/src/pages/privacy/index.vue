@@ -53,7 +53,7 @@ function goBack() {
 
 <style scoped>
 .policy-scroll {
-  height: calc(100vh - 112rpx);
+  height: calc(100vh - var(--tb-topbar-height));
 }
 
 .policy-content {

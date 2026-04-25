@@ -137,7 +137,7 @@ onLoad((query) => {
 
 <style scoped>
 .chapter-scroll {
-  height: calc(100vh - 112rpx);
+  height: calc(100vh - var(--tb-topbar-height));
 }
 
 .chapter-content {
@@ -153,8 +153,8 @@ onLoad((query) => {
   min-height: 48rpx;
   align-items: center;
   padding: 0 20rpx;
-  border-radius: var(--tb-radius-pill);
-  background: var(--tb-surface-card);
+  border-radius: 8rpx;
+  background: #fff;
   font-size: 22rpx;
   font-weight: 600;
   color: var(--tb-primary);
@@ -180,9 +180,9 @@ onLoad((query) => {
 .chapter-body {
   margin-top: 24rpx;
   padding: 30rpx;
-  border-radius: 34rpx;
-  background: #fffdfa;
-  box-shadow: 0 20rpx 48rpx rgba(155, 63, 30, 0.05);
+  border-radius: 20rpx;
+  background: #fff;
+  box-shadow: none;
 }
 
 .chapter-body__paragraph {
@@ -209,14 +209,14 @@ onLoad((query) => {
   width: 10rpx;
   height: 58rpx;
   border-radius: 999rpx;
-  background: rgba(155, 63, 30, 0.16);
+  background: rgba(7, 193, 96, 0.24);
 }
 
 .empty-card {
   margin-top: 24rpx;
   padding: 30rpx;
-  border-radius: 30rpx;
-  background: var(--tb-surface-low);
+  border-radius: 20rpx;
+  background: #fff;
 }
 
 .empty-card__title {
@@ -236,29 +236,29 @@ onLoad((query) => {
 
 .chapter-footer {
   position: fixed;
-  left: 24rpx;
-  right: 24rpx;
-  bottom: calc(env(safe-area-inset-bottom) + 20rpx);
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   gap: 16rpx;
-  padding: 16rpx;
-  border-radius: 32rpx;
-  background: var(--tb-surface-card-strong);
-  box-shadow: 0 12rpx 26rpx rgba(155, 63, 30, 0.08);
+  padding: 16rpx 24rpx calc(env(safe-area-inset-bottom) + 16rpx);
+  background: rgba(247, 247, 247, 0.98);
+  border-top: 2rpx solid rgba(0, 0, 0, 0.06);
+  box-shadow: none;
 }
 
 .chapter-footer__ghost,
 .chapter-footer__primary {
   min-height: 88rpx;
-  border-radius: 24rpx;
+  border-radius: 12rpx;
   font-size: 24rpx;
   font-weight: 600;
 }
 
 .chapter-footer__ghost {
   flex: 1;
-  background: rgba(255, 255, 255, 0.74);
-  color: var(--tb-secondary);
+  background: #fff;
+  color: var(--tb-text);
 }
 
 .chapter-footer__ghost[disabled] {

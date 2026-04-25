@@ -514,11 +514,12 @@ export async function submitAudioTranscript(
   assertSafeUserContent(normalizedTranscript);
   const createdAt = nowIso();
   const duration = Math.max(8, Math.round(payload?.duration ?? Math.max(12, normalizedTranscript.length * 1.8)));
-  const segments = buildSegments(normalizedTranscript, duration, createdAt);
+  const isTextSubmission = payload?.format === 'mock-text';
+  const segments = isTextSubmission ? [] : buildSegments(normalizedTranscript, duration, createdAt);
   const userMessage = createMessage('user', normalizedTranscript, {
     id: makeId('msg'),
     createdAt,
-    displayType: payload?.format === 'mock-text' ? 'text' : 'audio',
+    displayType: isTextSubmission ? 'text' : 'audio',
     transcript: normalizedTranscript,
     duration,
     recordingMode: payload?.isLocked ? 'locked' : payload?.recordingMode ?? 'press-hold',
